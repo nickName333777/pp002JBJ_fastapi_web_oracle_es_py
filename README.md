@@ -118,8 +118,8 @@ cp .env.example .env
 
 ```env
 # Database
-DB_USER=jbj_user
-DB_PASSWORD=jbj_pass123
+DB_USER=your_user
+DB_PASSWORD=your_pass123
 DB_HOST=oracle-db
 DB_PORT=1521
 DB_SERVICE=XEPDB1
@@ -190,7 +190,7 @@ SELECT * FROM LEVELS;
 ```
 
 
-(옶션2)
+(옵션2)
 ```bash
 # 또는, Oracle 컨테이너가 완전히 시작된 후[약간 다름]:
 docker exec -it jbj-oracle sqlplus sys/YourSecurePassword123@//localhost:1521/XEPDB1 as sysdba
@@ -364,10 +364,5 @@ python main.py
 - ⏳ Elasticsearch 검색
 - ⏳ AI 챗봇 통합
 
-## 🤝 기여
 
-버그 리포트나 기능 제안은 이슈로 등록해주세요.
 
-## 📄 라이선스
-
-MIT License
