@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JBJ - 태양광 장비 모니터링 플랫폼</title>
+    <link rel="stylesheet" href="/static/css/common.css">
+    <link rel="stylesheet" href="/static/css/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- 헤더 -->
+    <header id="header">
+        <div class="header-container">
+            <div class="header-left">
+                <a href="/index.html" class="logo">
+                    <img src="/static/images/jbj_logo.png" alt="JBJ Logo">
+                </a>
+                
+                <!-- 검색 영역 -->
+                <div class="search-area">
+                    <input type="search" id="globalSearch" placeholder="검색어를 입력해주세요" autocomplete="off">
+                    <button class="search-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
+                </div>
+            </div>
+            
+            <div class="header-right">
+                <!-- 알림 -->
+                <div class="notification-container" id="notificationContainer" style="display: none;">
+                    <button class="notification-btn">
+                        <i class="fa-regular fa-bell"></i>
+                        <span class="notification-count" id="notificationCount">0</span>
+                    </button>
+                    <ul class="notification-list" id="notificationList">
+                        <!-- 알림 목록 동적 생성 -->
+                    </ul>
+                </div>
+                
+                <!-- 로그인/사용자 메뉴 -->
+                <div class="user-menu" id="userMenu">
+                    <!-- 로그인 전 -->
+                    <div class="login-menu" id="loginMenu">
+                        <a href="/login.html" class="btn-login">로그인</a>
+                        <span>|</span>
+                        <a href="/signup.html" class="btn-signup">회원가입</a>
+                    </div>
+                    
+                    <!-- 로그인 후 -->
+                    <div class="user-info" id="userInfo" style="display: none;">
+                        <label for="userMenuToggle">
+                            <span id="userNickname">사용자</span>
+                            <i class="fa-solid fa-caret-down"></i>
+                        </label>
+                        <input type="checkbox" id="userMenuToggle" style="display: none;">
+                        
+                        <div class="dropdown-menu">
+                            <a href="/mypage.html">내 정보</a>
+                            <a href="#" id="logoutBtn">로그아웃</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <!-- 네비게이션 -->
+    <nav id="navigation">
+        <ul class="nav-menu">
+            <li><a href="/board.html">자유게시판</a></li>
+            <li><a href="/dashboard.html">모니터링 대시보드</a></li>
+            <li><a href="/analytics.html">데이터 분석</a></li>
+            <li><a href="/ml-modeling.html">ML/DL 모델링</a></li>
+        </ul>
+    </nav>
+    
+    <!-- 메인 콘텐츠 -->
+    <main class="main-content">
+        <section class="hero-section">
+            <div class="hero-content">
+                <h1>JBJ에 오신 것을 환영합니다</h1>
+                <p>태양광 장비 모니터링 플랫폼</p>
+                <div class="hero-buttons">
+                    <a href="/board.html" class="btn-primary">게시판 보기</a>
+                    <a href="/signup.html" class="btn-secondary">회원가입</a>
+                </div>
+            </div>
+        </section>
+        
+        <section class="features-section">
+            <div class="container">
+                <h2>주요 기능</h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <i class="fa-solid fa-comments fa-3x"></i>
+                        <h3>자유게시판</h3>
+                        <p>재생에너지에 관해 자유롭게 소통하고 정보를 공유하세요</p>
+                    </div>
+                    <div class="feature-card">
+                        <i class="fa-solid fa-chart-line fa-3x"></i>
+                        <h3>모니터링 대시보드</h3>
+                        <p>실시간 데이터를 시각화하여 모니터링</p>
+                    </div>
+                    <div class="feature-card">
+                        <i class="fa-solid fa-database fa-3x"></i>
+                        <h3>데이터 분석</h3>
+                        <p>강력한 데이터 분석 도구 제공</p>
+                    </div>
+                    <div class="feature-card">
+                        <i class="fa-solid fa-brain fa-3x"></i>
+                        <h3>ML/DL 모델링</h3>
+                        <p>머신러닝/딥러닝 모델 개발 지원</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="recent-posts-section">
+            <div class="container">
+                <h2>최근 게시글</h2>
+                <div class="posts-grid" id="recentPosts">
+                    <!-- 최근 게시글 동적 로딩 -->
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <!-- 푸터 -->
+    <footer id="footer">
+        <div class="footer-container">
+            <div class="footer-content">
+                <p>Copyright &copy; 2024 DevLog Community</p>
+                <div class="footer-links">
+                    <a href="/about.html">프로젝트 소개</a>
+                    <span>|</span>
+                    <a href="/terms.html">이용약관</a>
+                    <span>|</span>
+                    <a href="/privacy.html">개인정보처리방침</a>
+                    <span>|</span>
+                    <a href="/contact.html">고객센터</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <script src="/static/js/common.js"></script>
+    <script src="/static/js/main.js"></script>
+</body>
+</html>

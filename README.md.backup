@@ -225,8 +225,6 @@ ALTER USER jbj_user DEFAULT TABLESPACE SYSTEM
 QUOTA UNLIMITED ON SYSTEM;
 
 -- ['jbj_user'계정 젒속하여 init.sql 실행]
---
---
 
 ```
 
