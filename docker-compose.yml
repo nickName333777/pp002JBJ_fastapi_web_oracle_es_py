@@ -72,8 +72,8 @@ services: # 이 아래에 여러 컨테이너(서비스)를 나열한다.
       - "9200:9200"
       - "9300:9300"
     volumes:
+      - /home/elasticsearch/esdata:/usr/share/elasticsearch/data  # host 폴더에 마운트    
       #- es-data:/usr/share/elasticsearch/data # Docker가 자동 관리하는 볼륨
-      - /home/elasticsearch/esdata:/usr/share/elasticsearch/data  # host 폴더에 마운트
     networks:
       - jbj-network
     healthcheck:

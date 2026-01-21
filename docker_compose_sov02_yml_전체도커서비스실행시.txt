@@ -1,0 +1,114 @@
+version: '3.8'
+
+services:
+  # Oracle Database (기존 컨테이너 사용)
+  oracle-db:
+    image: container-registry.oracle.com/database/express:21.3.0-xe
+    container_name: oracle21c  # 기존 컨테이너 이름 사용
+    environment:
+      - ORACLE_PWD=your_oracleAdminPwd  # 기존 비밀번호
+      - ORACLE_CHARACTERSET=AL32UTF8
+    ports:
+      - "1521:1521"
+      - "5500:5500"
+    volumes:
+      - ./init-scripts:/opt/oracle/scripts/startup
+      - /home/oracle/oradata:/opt/oracle/oradata  # 기존 호스트 경로 사용      
+      #- oracle-data:/opt/oracle/oradata  #
+    networks:
+      - jbj-network
+    healthcheck:
+      test: ["CMD", "sqlplus", "-L", "sys/1234567dockeR@//localhost:1521/XEPDB1 as sysdba", "@/dev/null"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  # FastAPI Backend
+  fastapi-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: jbj-fastapi
+    environment:
+      - DB_USER=your_user
+      - DB_PASSWORD=your_password
+      - DB_HOST=oracle-db
+      - DB_PORT=1521
+      - DB_SERVICE=XEPDB1
+      - SMTP_SERVER=smtp.gmail.com
+      - SMTP_PORT=587
+      - SMTP_USER=your_email@gmail.com
+      - SMTP_PASSWORD=your_app_password
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      - ./static:/app/static
+    depends_on:
+      oracle-db:
+        condition: service_healthy
+    networks:
+      - jbj-network
+    restart: unless-stopped
+
+  # Elasticsearch
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: jbj-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - /home/elasticsearch/esdata:/usr/share/elasticsearch/data  # host 폴더에 마운트       
+      #- es-data:/usr/share/elasticsearch/data
+    networks:
+      - jbj-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Kibana
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.0
+    container_name: jbj-kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - jbj-network
+    restart: unless-stopped
+
+  # Logstash (Optional - 추후 로그 수집용)
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.11.0
+    container_name: jbj-logstash
+    volumes:
+      - ./logstash/pipeline:/usr/share/logstash/pipeline
+      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml
+    ports:
+      - "5044:5044"
+      - "9600:9600"
+    depends_on:
+      - elasticsearch
+    networks:
+      - jbj-network
+    restart: unless-stopped
+
+networks:
+  jbj-network:
+    driver: bridge
+
+volumes:
+  #oracle-data: # oracle-data는 호스트 경로 사용으로 제거
+  #es-data: # es-data도 호스트 경로 사용으로 제거

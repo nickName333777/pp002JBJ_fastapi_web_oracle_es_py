@@ -144,10 +144,11 @@ mkdir -p static/images
 # jbj_logo.png 파일을 static/images/ 폴더에 복사
 ```
 
-### 5. Docker Compose 실행
+### 5-A. Docker Compose 실행 [옵션 A]
+==> docker_compose_yml_sov02_전체도커서비스실행시.txt 참조
 
 ```bash
-# 모든 서비스 시작(옵션1)
+# 모든 서비스 시작(옵션1) => docker_compose_yml_sov02_전체도커서비스실행시.txt 참조
 docker-compose up -d
 ## 빌드 및 시작
 #docker-compose up --build -d
@@ -163,6 +164,65 @@ docker-compose logs -f fastapi-backend
 ## 로그 확인
 #docker-compose logs -f
 ```
+
+
+### 5-B. 기존 oracle21c 컨테이너 계속 사용 [옵션 B]
+==> docker-compose.yml 참조
+
+docker-compose.yml에서 새로 정의한 oracle-db 또는 jbj-oracle 컨테이너를 사용하지 않고, 이전에 Moa, Devlog프로젝트에서 계속 사용했던 docker 'oracle21c' 컨테이너를 여기서도 계속 사용하고자 할 경우 아래 순서대로 실행하면 된다.
+
+
+```bash
+
+# 1. 기존 Oracle 시작
+docker start oracle21c
+
+# 2. .env 파일 설정 (-> 이건 이미 .env에 반영되어 있음)
+cat > .env << EOF
+DB_HOST=oracle21c
+DB_PASSWORD=jbj_pass123
+DB_USER=jbj_user
+DB_PORT=1521
+DB_SERVICE=XEPDB1
+EOF
+
+# 3. docker-compose 네트워크 생성
+docker-compose up -d --no-start
+
+# 4. docker-compose 네트워크 확인
+docker network ls | grep jbj
+
+# 5. Oracle(oracle21c)을 네트워크에 연결
+docker network connect jbj-fastapi_jbj-network oracle21c
+
+# 6. docker-compose에서 Oracle 제외하고 실행(나머지 서비스 시작)
+# (이걸 먼저 시작하면 나머지 서비스 실행되면서 docker-compose 네크워크가 생성되므로 3번의 네트워크 연결을 이 다음에 해도 된다.)
+docker-compose up -d fastapi-backend elasticsearch kibana
+
+# 7. 네트워크 연결 확인
+docker exec -it jbj-fastapi ping -c 3 oracle21c
+
+# 8. 웹 접속
+curl http://localhost:8000/health
+
+# 9. 연결 테스트
+docker logs jbj-fastapi
+
+
+
+# 10. Python에서 직접 테스트
+python -c "
+import cx_Oracle
+try:
+    conn = cx_Oracle.connect('jbj_user/jbj_pass123@oracle21c:1521/XEPDB1')
+    print('✅ Oracle 연결 성공!')
+    conn.close()
+except Exception as e:
+    print(f'❌ 연결 실패: {e}')
+"
+
+```
+
 
 ### 6. 데이터베이스 초기화
 
@@ -234,61 +294,7 @@ COMMIT;
 ```
 
 
-### 7. 기존 oracle21c 컨테이너 계속 사용
-
-
-```bash
-
-# 1. 기존 Oracle 시작
-docker start oracle21c
-
-# 2. .env 파일 설정
-cat > .env << EOF
-DB_HOST=oracle21c
-DB_PASSWORD=jbj_pass123
-DB_USER=jbj_user
-DB_PORT=1521
-DB_SERVICE=XEPDB1
-EOF
-
-# 3. docker-compose 네트워크 생성
-docker-compose up -d --no-start
-
-# 4. docker-compose 네트워크 확인
-docker network ls | grep jbj
-
-# 5. Oracle(oracle21c)을 네트워크에 연결
-docker network connect jbj-fastapi_jbj-network oracle21c
-
-# 6. docker-compose에서 Oracle 제외하고 실행(나머지 서비스 시작)
-# (이걸 먼저 시작하면 나머지 서비스 실행되면서 docker-compose 네크워크가 생성되므로 3번의 네트워크 연결을 이 다음에 해도 된다.)
-docker-compose up -d fastapi-backend elasticsearch kibana
-
-# 7. 네트워크 연결 확인
-docker exec -it jbj-fastapi ping -c 3 oracle21c
-
-# 8. 웹 접속
-curl http://localhost:8000/health
-
-# 9. 연결 테스트
-docker logs jbj-fastapi
-
-
-
-# 10. Python에서 직접 테스트
-python -c "
-import cx_Oracle
-try:
-    conn = cx_Oracle.connect('jbj_user/jbj_pass123@oracle21c:1521/XEPDB1')
-    print('✅ Oracle 연결 성공!')
-    conn.close()
-except Exception as e:
-    print(f'❌ 연결 실패: {e}')
-"
-
-```
-
-### 8. oracle, elasticsearch 호스트 마운트 폴더 권한 맞추기
+### 7. oracle, elasticsearch 호스트 마운트 폴더 권한 맞추기
 
 #### oracle: 
 ```bash
@@ -325,8 +331,7 @@ docker exec -it jbj-elasticsearch id
 ```
 
 
-
-### 9. 애플리케이션 접속
+### 8. 애플리케이션 접속
 
 - **메인 페이지**: http://localhost:8000
 - **로그인 페이지**: http://localhost:8000/login.html
