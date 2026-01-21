@@ -8,11 +8,15 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import os
+# docker-compose fastapi-backend environment에 정의되어 이미 OS에 등록된 환경 변수이므로 from dotenv import load_dotenv 필요없음
+# from dotenv import load_dotenv # 로컬 개발일때  + .env 사용
+# load_dotenv()  # .env → OS 환경변수로 로드; 앱 시작 시 한 번만, 보통 config.py에서 처리
 
 from database import get_db
 from models import Auth
 from schemas import EmailAuthRequest, EmailAuthCheckRequest
 from auth import generate_auth_code
+
 
 router = APIRouter(prefix="/sendEmail", tags=["email"])
 

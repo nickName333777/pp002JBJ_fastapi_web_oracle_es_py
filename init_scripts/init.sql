@@ -1,4 +1,20 @@
--- DevLog Database 초기화 스크립트
+------------------------------------------------------------
+-- [여기부터 4줄 관리자 계정접속해서 'jbj_user'계정 생성]
+------------------------------------------------------------
+--ALTER SESSION SET "_ORACLE_SCRIPT" = TRUE;
+---- 계정 생성
+--CREATE USER jbj_user IDENTIFIED BY jbj_pass123;
+---- 권한 부여
+--GRANT CONNECT, RESOURCE, CREATE VIEW TO jbj_user;
+---- 객체 생성 공간 할당성
+--ALTER USER jbj_user DEFAULT TABLESPACE SYSTEM
+--QUOTA UNLIMITED ON SYSTEM;
+--COMMIT;
+
+------------------------------------------------------------
+-- ['jbj_user'계정 젒속하여 init.sql 실행]
+------------------------------------------------------------
+-- JBJ Database 초기화 스크립트
 
 -- LEVELS 테이블 생성
 DROP TABLE "LEVELS";

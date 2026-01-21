@@ -5,6 +5,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 import os
+# docker-compose fastapi-backend environment에 정의되어 이미 OS에 등록된 환경 변수이므로 from dotenv import load_dotenv 필요없음
+# from dotenv import load_dotenv # 로컬 개발일때  + .env 사용
+# load_dotenv()  # .env → OS 환경변수로 로드; 앱 시작 시 한 번만, 보통 config.py에서 처리
 
 # 환경변수에서 DB 정보 가져오기
 DB_USER = os.getenv("DB_USER", "your_user")

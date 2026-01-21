@@ -147,10 +147,12 @@ mkdir -p static/images
 ### 5. Docker Compose 실행
 
 ```bash
-# 모든 서비스 시작
+# 모든 서비스 시작(옵션1)
 docker-compose up -d
 ## 빌드 및 시작
 #docker-compose up --build -d
+# Oracle 제외하고 나머지만 실행(옵션2)
+docker-compose up -d fastapi-backend elasticsearch kibana logstash
 
 # 로그 확인
 docker-compose logs -f fastapi-backend
@@ -223,6 +225,7 @@ GRANT CONNECT, RESOURCE, CREATE VIEW TO jbj_user;
 -- 객체 생성 공간 할당성
 ALTER USER jbj_user DEFAULT TABLESPACE SYSTEM
 QUOTA UNLIMITED ON SYSTEM;
+COMMIT;
 
 -- ['jbj_user'계정 젒속하여 init.sql 실행]
 --
@@ -231,8 +234,98 @@ QUOTA UNLIMITED ON SYSTEM;
 ```
 
 
+### 7. 기존 oracle21c 컨테이너 계속 사용
 
-### 7. 애플리케이션 접속
+
+```bash
+
+# 1. 기존 Oracle 시작
+docker start oracle21c
+
+# 2. .env 파일 설정
+cat > .env << EOF
+DB_HOST=oracle21c
+DB_PASSWORD=jbj_pass123
+DB_USER=jbj_user
+DB_PORT=1521
+DB_SERVICE=XEPDB1
+EOF
+
+# 3. docker-compose 네트워크 생성
+docker-compose up -d --no-start
+
+# 4. docker-compose 네트워크 확인
+docker network ls | grep jbj
+
+# 5. Oracle(oracle21c)을 네트워크에 연결
+docker network connect jbj-fastapi_jbj-network oracle21c
+
+# 6. docker-compose에서 Oracle 제외하고 실행(나머지 서비스 시작)
+# (이걸 먼저 시작하면 나머지 서비스 실행되면서 docker-compose 네크워크가 생성되므로 3번의 네트워크 연결을 이 다음에 해도 된다.)
+docker-compose up -d fastapi-backend elasticsearch kibana
+
+# 7. 네트워크 연결 확인
+docker exec -it jbj-fastapi ping -c 3 oracle21c
+
+# 8. 웹 접속
+curl http://localhost:8000/health
+
+# 9. 연결 테스트
+docker logs jbj-fastapi
+
+
+
+# 10. Python에서 직접 테스트
+python -c "
+import cx_Oracle
+try:
+    conn = cx_Oracle.connect('jbj_user/jbj_pass123@oracle21c:1521/XEPDB1')
+    print('✅ Oracle 연결 성공!')
+    conn.close()
+except Exception as e:
+    print(f'❌ 연결 실패: {e}')
+"
+
+```
+
+### 8. oracle, elasticsearch 호스트 마운트 폴더 권한 맞추기
+
+#### oracle: 
+```bash
+# 소유자 확인
+ls -la /home/oracle/
+
+# 권한 부여 (필요시)
+sudo chown -R 54321:54321 /home/oracle/oradata
+sudo chmod -R 755 /home/oracle/oradata
+```
+
+#### elasticsearch:
+Elasticsearch 컨테이너 기본 권한 개념
+- 공식 Elasticsearch 도커 이미지는 컨테이너 내부에서 보통 UID 1000, GID 0(root 그룹) 또는 1000:1000 으로 실행된다.
+- 호스트 디렉터리를 바인드 마운트(/home/elasticsearch/esdata:/usr/share/elasticsearch/data) 하면, 컨테이너 안 프로세스 UID/GID 가 호스트 디렉터리에도 쓰기 권한이 있어야 한다.
+​
+```bash
+
+# 폴더 생성:
+sudo mkdir -p /home/elasticsearch/esdata
+ls -la /home/elasticsearch/
+
+# 실제 UID/GID 는 컨테이너를 한 번 띄운 뒤 다음처럼 확인
+docker exec -it jbj-elasticsearch id
+
+# 권한 부여 (필요시)
+# 1) UID/GID 맞춰서 chown (권장): 대부분의 경우 아래 둘 중 하나가 맞는다.
+	# 컨테이너가 1000:0 으로 동작하는 경우:
+	sudo chown -R 1000:0 /home/elasticsearch/esdata
+	# 컨테이너가 1000:1000 으로 동작하는 경우:
+	sudo chown -R 1000:1000 /home/elasticsearch/esdata
+# 2) rwx권한
+	sudo chmod -R 755 /home/elasticsearch/esdata
+```
+
+
+### 9. 애플리케이션 접속
 
 - **메인 페이지**: http://localhost:8000
 - **로그인 페이지**: http://localhost:8000/login.html
