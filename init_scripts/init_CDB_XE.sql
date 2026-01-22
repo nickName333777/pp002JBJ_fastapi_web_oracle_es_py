@@ -1,20 +1,94 @@
 ------------------------------------------------------------
--- [여기부터 4줄 관리자 계정접속해서 'jbj_user'계정 생성]
+-- CDB (Container DB, 서비스name: XE) 용 유저 생성 by 관리자
+-- [여기부터 4줄 관리자 계정접속해서 CDB(XE)에 'jbj_user'계정 생성]
 ------------------------------------------------------------
+---- 예전 버전(11g이전 버전) 오라클 구분 사용하기:
+---- 21C 버전은 일반 사용자를 구분할 떄 ID 앞에 C##을 붙여야하는데
+---- 이를 무시하고 11g(이전버전은 C##안붙임)와 호환되는 
+---- SQL문을 작성하게 하는 SQL문
 --ALTER SESSION SET "_ORACLE_SCRIPT" = TRUE;
 ---- 계정 생성
 --CREATE USER jbj_user IDENTIFIED BY jbj_pass123;
 ---- 권한 부여
 --GRANT CONNECT, RESOURCE, CREATE VIEW TO jbj_user;
+-- CONNECT : DB 연결 권한 ROLE (SET CONTAINER, CREATE SESSION; 2개 권한)
+-- RESOURCE : DB 기본 객체 생성 권한 ROLE (CREATE INDEXTYPE, 
+                   --  CREATE OPERATOR, CREATE TYPE, CREATE TRIGGER,
+                   --  CREATE PROCEDURE, CREATE SEQUENCE, CREATE CLUSTER
+                   -- CREATE TABLE; 8개 권한)
+
 ---- 객체 생성 공간 할당성
+-- 객체(테이블 등)가 생성될 수 있는 "공간" 할당량 지정(TABLESPACE -> UNLIMITED)
 --ALTER USER jbj_user DEFAULT TABLESPACE SYSTEM
 --QUOTA UNLIMITED ON SYSTEM;
+
 --COMMIT;
+----------------------
+--SELECT * FROM ALL_USERS;
+--SELECT * FROM DBA_USERS;
+--
+--SELECT * FROM USER_TABLES;
+--
+--SELECT * FROM USER_SYS_PRIVS; -- CTRL + SHIFT + D : 한줄 아래로 복사
+--SELECT * FROM DBA_SYS_PRIVS;
+--SELECT * FROM USER_ROLE_PRIVS;
+--SELECT * FROM DBA_ROLE_PRIVS;
+
+
+
 
 ------------------------------------------------------------
 -- ['jbj_user'계정 젒속하여 init.sql 실행]
 ------------------------------------------------------------
 -- JBJ Database 초기화 스크립트
+
+
+
+--DROP TABLE VIEW_LOG; -- MEMBER, BOARD, LEVELS
+--DROP TABLE "USER_BEN";
+--DROP TABLE "COFFEE_BEANS_HISTORY";
+--DROP TABLE "MESSAGE_IMG";
+--DROP TABLE "RECOMMEND_BOOKS";
+--DROP TABLE "BLOG_TAG";
+--DROP TABLE "COFFEE_BEANS_TRADE";
+--DROP TABLE "JOB_POSTING"; 
+--DROP TABLE "REPORT";
+--DROP TABLE "COFFEE_BEANS_EXCHANGE";
+--DROP TABLE "MESSAGE_EMOJI";
+--DROP TABLE "FOLLOW";
+DROP TABLE "AUTH";
+--DROP TABLE "COFFEE_BEANS_PAY";
+--DROP TABLE "TAG";
+--DROP TABLE "REPORT_CODE";
+--DROP TABLE "CHATTING_USER";
+--DROP TABLE "CAFE_IMAGE";
+--DROP TABLE "MESSAGE";
+--DROP TABLE "COMMENT_LIKE";
+--DROP TABLE "VISIT_COUNT";
+DROP TABLE "CB_TOKEN_USAGE";
+--DROP TABLE "USER_SCRAP";
+DROP TABLE "SOCIAL_LOGIN";
+DROP TABLE "NOTIFICATION";
+DROP TABLE "BOARD_IMG";
+DROP TABLE "CB_SESSION";
+--DROP TABLE "SUBSCRIBE";
+DROP TABLE "BOARD_LIKE";
+--DROP TABLE "BANK_INFO";
+--DROP TABLE "CAFE_REVIEW_KEYWORD";
+--DROP TABLE "COMPANY_CODE";
+--DROP TABLE "RECOMMEND_CAFES";
+DROP TABLE "COMMENT";
+--DROP TABLE "BLOG";
+--DROP TABLE "EMOJI";
+DROP TABLE "BOARD";
+--DROP TABLE "CHATTING_ROOM";
+DROP TABLE "MEMBER";
+DROP TABLE "LEVELS";
+DROP TABLE "BOARDTYPE";
+
+
+
+
 
 -- LEVELS 테이블 생성
 DROP TABLE "LEVELS";
@@ -83,6 +157,7 @@ COMMENT ON COLUMN "MEMBER"."MEMBER_LEVEL" IS 'LV1 ~ LV30';
 
 
 -- 시퀀스 생성
+DROP SEQUENCE SEQ_MEMBER_NO; 
 CREATE SEQUENCE SEQ_MEMBER_NO
     START WITH 1
     INCREMENT BY 1
@@ -102,6 +177,7 @@ COMMENT ON COLUMN "AUTH"."CODE" IS '인증키 코드';
 COMMENT ON COLUMN "AUTH"."EMAIL" IS '이메일';
 COMMENT ON COLUMN "AUTH"."CREATE_AT" IS '생성시간';
 
+DROP SEQUENCE SEQ_AUTH_NO; 
 CREATE SEQUENCE SEQ_AUTH_NO
     START WITH 1
     INCREMENT BY 1

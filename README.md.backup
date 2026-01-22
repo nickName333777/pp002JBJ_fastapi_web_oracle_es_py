@@ -144,87 +144,7 @@ mkdir -p static/images
 # jbj_logo.png 파일을 static/images/ 폴더에 복사
 ```
 
-### 5-A. Docker Compose 실행 [옵션 A]
-==> docker_compose_yml_sov02_전체도커서비스실행시.txt 참조
-
-```bash
-# 모든 서비스 시작(옵션1) => docker_compose_yml_sov02_전체도커서비스실행시.txt 참조
-docker-compose up -d
-## 빌드 및 시작
-#docker-compose up --build -d
-# Oracle 제외하고 나머지만 실행(옵션2)
-docker-compose up -d fastapi-backend elasticsearch kibana logstash
-
-# 로그 확인
-docker-compose logs -f fastapi-backend
-#docker-compose logs -f oracle-db
-#docker-compose logs -f elasticsearch
-#docker-compose logs -f kibana
-#docker-compose logs -f logstash
-## 로그 확인
-#docker-compose logs -f
-```
-
-
-### 5-B. 기존 oracle21c 컨테이너 계속 사용 [옵션 B]
-==> docker-compose.yml 참조
-
-docker-compose.yml에서 새로 정의한 oracle-db 또는 jbj-oracle 컨테이너를 사용하지 않고, 이전에 Moa, Devlog프로젝트에서 계속 사용했던 docker 'oracle21c' 컨테이너를 여기서도 계속 사용하고자 할 경우 아래 순서대로 실행하면 된다.
-
-
-```bash
-
-# 1. 기존 Oracle 시작
-docker start oracle21c
-
-# 2. .env 파일 설정 (-> 이건 이미 .env에 반영되어 있음)
-cat > .env << EOF
-DB_HOST=oracle21c
-DB_PASSWORD=jbj_pass123
-DB_USER=jbj_user
-DB_PORT=1521
-DB_SERVICE=XEPDB1
-EOF
-
-# 3. docker-compose 네트워크 생성
-docker-compose up -d --no-start
-
-# 4. docker-compose 네트워크 확인
-docker network ls | grep jbj
-
-# 5. Oracle(oracle21c)을 네트워크에 연결
-docker network connect jbj-fastapi_jbj-network oracle21c
-
-# 6. docker-compose에서 Oracle 제외하고 실행(나머지 서비스 시작)
-# (이걸 먼저 시작하면 나머지 서비스 실행되면서 docker-compose 네크워크가 생성되므로 3번의 네트워크 연결을 이 다음에 해도 된다.)
-docker-compose up -d fastapi-backend elasticsearch kibana
-
-# 7. 네트워크 연결 확인
-docker exec -it jbj-fastapi ping -c 3 oracle21c
-
-# 8. 웹 접속
-curl http://localhost:8000/health
-
-# 9. 연결 테스트
-docker logs jbj-fastapi
-
-
-
-# 10. Python에서 직접 테스트
-python -c "
-import cx_Oracle
-try:
-    conn = cx_Oracle.connect('jbj_user/jbj_pass123@oracle21c:1521/XEPDB1')
-    print('✅ Oracle 연결 성공!')
-    conn.close()
-except Exception as e:
-    print(f'❌ 연결 실패: {e}')
-"
-
-```
-
-
-### 6. 데이터베이스 초기화
+### 5. 데이터베이스 초기화
 
 (옵션1) Oracle 컨테이너가 완전히 시작된 후 (약 2-3분 소요):
 
@@ -276,22 +196,340 @@ exit;
 (옵션3) 혹은 sqldeveloper에서 아래 것들을 수행해도 된다.
 ```sqldeveloper
 
--- [여기부터 4줄 관리자 계정접속해서 'jbj_user'계정 생성]
-ALTER SESSION SET "_ORACLE_SCRIPT" = TRUE;
--- 계정 생성
+------------------------------------------------------------
+-- PDB (Pluggable DB, 서비스name: XEPDB1) 용 유저 생성 by 관리자
+-- [여기부터 4줄 관리자 계정접속해서 PDB(XEPDB1)에 'jbj_user'계정 생성]
+------------------------------------------------------------
+
+
+-- 1. 관리자 계정(sys as sysdba)으로 접속
+-- 관리자 계정임을 확인
+SELECT USER FROM dual;
+-- 'SYS' 나와야함
+
+-- 2. CDB$ROOT로 이동 후 새 PDB (XEPDB1) 생성
+-- 2-0) CDB 루트에서 실행
+ALTER SESSION SET CONTAINER = CDB$ROOT;
+SHOW CON_NAME; 
+-- CDB$ROOT 나옴
+
+-- CDB 레벨 확인
+SELECT 'CDB (XE)' as location, username, account_status, common 
+FROM cdb_users;
+--WHERE username = 'JBJ_USER'; # 'JBJ_USER'가 CDB, PDB에 각각 하나씩 있을 수 있으나, 이름만 같을뿐 별개의 nampespace
+
+-- 2-1) 모든 PDB 목록 확인
+SHOW PDBS;
+SELECT name, open_mode FROM v$pdbs;
+
+-- 2-2) XEPDB1 생성 (admin 사용자 포함)
+CREATE PLUGGABLE DATABASE XEPDB1 
+ADMIN USER xepdb1_admin IDENTIFIED BY xepdb1_pass123
+ROLES=(CONNECT, RESOURCE, DBA)
+FILE_NAME_CONVERT=(
+  '/opt/oracle/oradata/XE/pdbseed/',
+  '/opt/oracle/oradata/XE/XEPDB1/'
+);
+
+-- 2-3) PDB 열기
+ALTER PLUGGABLE DATABASE XEPDB1 OPEN;
+
+-- 3. 새 PDB로 접속 테스트
+ALTER SESSION SET CONTAINER = XEPDB1;
+SHOW CON_NAME;  
+-- "XEPDB1" 나옴
+
+-- 모든 사용자 계정 조회
+SELECT username FROM dba_users;
+-- 기존 사용자 삭제 (테이블 등 객체도 함께 삭제)
+DROP USER jbj_user CASCADE;
+-- 기존 사용자 삭제 확인
+SELECT username FROM dba_users WHERE username = 'JBJ_USER';
+-- 아무 결과도 안 나오면 성공
+
+-- 새 사용자 생성
 CREATE USER jbj_user IDENTIFIED BY jbj_pass123;
+--GRANT CONNECT, RESOURCE, CREATE TABLE TO jbj_user;
 -- 권한 부여
 GRANT CONNECT, RESOURCE, CREATE VIEW TO jbj_user;
--- 객체 생성 공간 할당성
-ALTER USER jbj_user DEFAULT TABLESPACE SYSTEM
-QUOTA UNLIMITED ON SYSTEM;
+-- CONNECT : DB 연결 권한 ROLE (SET CONTAINER, CREATE SESSION; 2개 권한)
+-- RESOURCE : DB 기본 객체 생성 권한 ROLE (CREATE INDEXTYPE, 
+                   --  CREATE OPERATOR, CREATE TYPE, CREATE TRIGGER,
+                   --  CREATE PROCEDURE, CREATE SEQUENCE, CREATE CLUSTER
+                   -- CREATE TABLE; 8개 권한)
+-- 객체 생성 공간 할당성QUOTA UNLIMITED ON SYSTEM;
+--ALTER USER jbj_user DEFAULT TABLESPACE SYSTEM
+--QUOTA UNLIMITED ON SYSTEM;
+ALTER USER jbj_user DEFAULT TABLESPACE USERS
+                    TEMPORARY TABLESPACE TEMP
+                    QUOTA UNLIMITED ON USERS;
+
 COMMIT;
 
+-- 확인
+SELECT username, account_status, common
+FROM dba_users 
+WHERE username = 'JBJ_USER';
+
+-- 현재 PDB 확인
+SHOW CON_NAME;
+-- XEPDB1 나옴
+
+-- XEPDB1 레벨 확인
+SELECT 'PDB (XEPDB1)' as location, username, account_status, common 
+FROM dba_users;
+--WHERE username = 'JBJ_USER';
+
+-- 모든 PDB 목록 확인 (CDB 보다는 적은 목록확인 가능)
+SHOW PDBS;
+SELECT name, open_mode FROM v$pdbs;
+
+-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
+-- ### 추천: 일반 작업용 연결은 PDB(XEPDB1) 사용 + 개발/관리용 연결은 SQL Developer로 관리
 -- ['jbj_user'계정 젒속하여 init.sql 실행]
 --
 --
+---- SQL Developer로 XEPDB1의 사용자도 관리: SQL Developer로 XEPDB1 접속 설정
+--새 연결 추가 (PDB 전용)
+--SQL Developer에서:
+--```
+--Connection Name: Oracle21c_XEPDB1
+--Username: jbj_user
+--Password: jbj_password1234
+--Connection Type: Basic
+--Hostname: localhost
+--Port: 1521
+--Service name: XEPDB1  ← 이게 중요!
+--```
+```
+
+
+
+### 6-A. Docker Compose 실행 [옵션 A]
+==> docker_compose_sov02_yml_전체도커서비스실행시.txt 참조
+
+```bash
+# 모든 서비스 시작(옵션1) => docker_compose_sov02_yml_전체도커서비스실행시.txt 참조
+docker-compose up -d # (옛날 v1 (별도 패키지))
+docker compose up -d # (현재 표준 (v2, Docker CLI 플러그인))
+
+## 빌드 및 시작
+#docker-compose up --build -d # (옛날 v1 (별도 패키지))
+#docker compose up --build -d # 현재 표준 (v2, Docker CLI 플러그인))
+# Oracle 제외하고 나머지만 실행(옵션2)
+docker-compose up -d fastapi-backend elasticsearch kibana logstash # (옛날 v1 (별도 패키지))
+docker compose up -d fastapi-backend elasticsearch kibana logstash # 현재 표준 (v2, Docker CLI 플러그인))
+
+# 로그 확인
+docker-compose logs -f fastapi-backend # (옛날 v1 (별도 패키지))
+docker compose logs -f fastapi-backend # 현재 표준 (v2, Docker CLI 플러그인))
+#docker-compose logs -f oracle-db # (옛날 v1 (별도 패키지))
+#docker-compose logs -f elasticsearch
+#docker-compose logs -f kibana
+#docker compose logs -f logstash
+#docker compose logs -f oracle-db # 현재 표준 (v2, Docker CLI 플러그인))
+#docker compose logs -f elasticsearch
+#docker compose logs -f kibana
+#docker compose logs -f logstash
+## 로그 확인
+#docker-compose logs -f # (옛날 v1 (별도 패키지))
+#docker compose logs -f # 현재 표준 (v2, Docker CLI 플러그인))
+```
+
+
+### 6-B. 기존 oracle21c 컨테이너 계속 사용 [옵션 B]
+==> docker-compose.yml 참조
+
+docker-compose.yml에서 새로 정의한 oracle-db 또는 jbj-oracle 컨테이너를 사용하지 않고, 이전에 Moa, Devlog프로젝트에서 계속 사용했던 docker 'oracle21c' 컨테이너를 여기서도 계속 사용하고자 할 경우 아래 순서대로 실행하면 된다.
+
+
+```bash
+
+# 1. 기존 Oracle 시작
+docker start oracle21c
+
+# 2. .env 파일 설정 (-> 이건 이미 .env에 반영되어 있음)
+cat > .env << EOF
+DB_HOST=oracle21c
+DB_PASSWORD=jbj_pass123
+DB_USER=jbj_user
+DB_PORT=1521
+DB_SERVICE=XEPDB1
+EOF
+
+# 3. docker compose 네트워크 생성
+docker compose up -d --no-start # 현재 표준 (v2, Docker CLI 플러그인))
+
+# 4. docker compose 네트워크 확인
+docker network ls | grep jbj
+
+# 5. Oracle(oracle21c)을 네트워크에 연결
+#docker network connect jbj-fastapi_jbj-network oracle21c
+docker network connect pp002jbj_fastapi_web_oracle_es_py_jbj-network oracle21c
+
+# 6. docker-compose에서 Oracle 제외하고 실행(나머지 서비스 시작)
+# (이걸 먼저 시작하면 나머지 서비스 실행되면서 docker-compose 네크워크가 생성되므로 3번의 네트워크 연결을 이 다음에 해도 된다.)
+docker compose up -d fastapi-backend elasticsearch kibana
+
+# 7. 네트워크 연결 확인
+docker exec -it jbj-fastapi ping -c 3 oracle21c # 만약 error exec: "ping": executable file not found in $PATH ==>Dockerfile에서 FROM python:3.10-slim => FROM python:3.10로하고 추가 유틸리티 설치(Dockerfile참조)
+
+#docker run -it pp002jbj_fastapi_web_oracle_es_py-fastapi-backend bash # run from the image
+
+# 8. 웹 접속
+curl http://localhost:8000/health
+(예상결과: {"status": "healthy", "database": "connected"})
+
+# 9. 연결 테스트
+docker logs jbj-fastapi
+
+# 10. Python에서 직접 테스트
+python -c "
+import cx_Oracle
+try:
+    conn = cx_Oracle.connect('jbj_user/jbj_pass123@oracle21c:1521/XEPDB1')
+    print('✅ Oracle 연결 성공!')
+    conn.close()
+except Exception as e:
+    print(f'❌ 연결 실패: {e}')
+"
 
 ```
+### 6-C. docker-compose.yml 실행 troubleshoot
+#### 6-C-1. 컨테이너 상태확인1
+- 컨테이너 진입: 
+
+아래 cli 커맨드로 docker container안으로 진입(나오는건 도커 프롬프트#에서 #exit 또는 ctl-D)
+$ docker run -it --rm python:3.10-slim bash
+
+- 컨테이너 안
+
+\# apt-get update
+\#apt-get install -y wget unzip libaio1
+
+#### 6-C-2. 컨테이너 상태확인2
+docker exec -it jbj-fastapi bash # 컨테이너 bash에 진입한 후
+
+ping oracle21c  # 네트워크 연결 확인
+
+#### 6-C-3. 개발 vs 운영/배포
+개발 환경 → python:3.10 (ping/curl/netstat 등 다 있음)
+운영/배포 → python:3.10-slim + 필요한 유틸리티만 설치
+
+\# 개발용 - 바로 사용 가능 (Ubuntu 기반 풀 버전: FROM python:3.10-focal)
+FROM python:3.10
+
+\# 또는 슬림 + 유틸리티만 추가 (중간 크기)
+FROM python:3.10-slim
+RUN apt-get update && apt-get install -y \
+    iputils-ping curl net-tools vim htop \
+    && rm -rf /var/lib/apt/lists/*
+
+#### 6-C-4. Docker Compose로 재빌드하는 방법들:<br>
+a. 특정 서비스만 재빌드 (가장 많이 씀)
+<br>\# fastapi-backend 서비스만 재빌드
+<br>docker compose build fastapi-backend
+<br>docker compose build --no-cache fastapi-backend # 제일 중요! 기존 캐시 때문에 새 코드가 안 먹힘
+<br>\# 재빌드 후 재시작
+<br>docker compose up -d fastapi-backend
+
+b. 강제 재빌드 + 재시작 (한 번에)
+<br>\# Dockerfile 바뀌었을 때 강제로 재빌드
+<br>docker compose up -d --build --force-recreate fastapi-backend
+
+c. 모든 서비스 재빌드
+<br>docker compose build
+<br>docker compose up -d
+
+d. 기존 컨테이너 완전 삭제 후 재빌드 (깔끔하게)
+<br>docker compose down
+<br>docker compose up -d --build
+
+e. 기존 코드 캐쉬에 남아서 안먹힐때.
+
+강제 재빌드:
+<br>docker compose down fastapi-backend
+<br>docker compose build --no-cache fastapi-backend
+<br>docker compose up -d fastapi-backend
+<br> 
+<br>컨테이너 안에서 Oracle Client 설치 확인:
+<br>docker exec -it jbj-fastapi bash
+<br>ls -la /opt/oracle/
+<br>echo $LD_LIBRARY_PATH
+<br>ldconfig -p | grep oracle
+
+#### 6-C-5. 다른 컨테이너가 아직 네트워크에 붙어서, 네트워크가 "Resource is still in use" 상태라 제거되지 않을 때: 네트워크 완전 제거 후 재생성해야 한다.
+
+1. 모든 컨테이너 완전 중지
+<br>docker compose down
+
+2. 남은 컨테이너들 확인 후 제거
+<br>\# 네트워크에 붙은 컨테이너 확인
+<br>docker network ls
+<br>docker network inspect pp002jbj_fastapi_web_oracle_es_py_jbj-network
+<br>\# 모든 컨테이너 중지&제거 (강제)
+<br>docker stop $(docker ps -aq)
+<br>docker rm $(docker ps -aq)
+
+3. 네트워크 강제 삭제
+<br>\# 네트워크 이름 확인
+<br>docker network ls
+<br>\# 해당 네트워크 강제 삭제
+<br>docker network rm pp002jbj_fastapi_web_oracle_es_py_jbj-network
+
+4. 한 번에 깔끔하게 정리 (추천)
+<br>\# 모든 도커 리소스 정리
+<br>docker compose down -v --remove-orphans --rmi all
+<br>\# 또는 모든 미사용 네트워크&컨테이너 정리
+<br>docker network prune -f
+<br>docker container prune -f
+
+5. 재빌드 & 재시작
+<br>docker compose build --no-cache fastapi-backend
+<br>docker compose up -d
+
+🚀 가장 빠른 해결책 (한 줄) <=======!!!!!
+
+<br>docker compose down --volumes --remove-orphans && docker network prune -f && docker compose up -d --build --force-recreate
+
+이렇게 하면 네트워크 완전 삭제 → 새로 생성 → 컨테이너 재빌드까지 한 번에 해결된다. 프로젝트 폴더명 기반으로 자동 생성된 네트워크는 위 명령어만으로 완벽히 정리된다.
+
+( 또는, fastapi-backend만 업데이트할 경우에 유용!!! ===> 
+<br>docker compose down && docker rmi $(docker images -q '*fastapi*') && docker compose build --no-cache fastapi-backend && docker compose up -d fastapi-backend
+<br>docker compose build --no-cache 꼭 해야 캐시 때문에 새 코드가 무시된다!)
+
+#### 6-C-6. 로그인 denied 이슈: 
+
+$sqlplus jbj_user/jbj_password1234@XEPDB1 실행 시 login denied 나올 경우 이유는:
+
+1. CDB(Container DB, 서비스명:XE)에 sqldeveloper를 이용하여 jbj_user/password를 등록하였지만 PDB(Pluggable DB, 서비스명:XEPDB1)에는 jbj_user가 등록되어 있지 않은 경우 => 두 연결 모두 각각  가능하고, 서로 독립적인 것임에 유의!!. CDB와 PDB는 **완전히 다른 네임스페이스**.
+```
+CDB (XE):
+  └── jbj_user (SQL Developer로 만든 것)
+
+PDB (XEPDB1):
+  └── jbj_user (새로 만들 것 - FastAPI용) by 도커bash cli또는 sqldeveloper
+
+```
+
+2. XEPDB1이 tnsnames.ora에 제대로 등록되지 않았을 가능성
+
+Oracle 21c Express는 기본적으로 XEPDB1 PDB(Pluggable Database)를 제공하지만
+tnsnames.ora 파일에 제대로 설정되어 있지 않으면 연결 실패
+tnsnames.ora 파일 설정을 확인하는 명령어:
+\# tnsnames.ora 파일 확인:
+$ docker exec -it oracle21c bash -c "
+cat /opt/oracle/product/21c/dbhomeXE/network/admin/tnsnames.ora
+"
+
+3. Easy Connect 방식으로 접속해야 함
+Oracle Express Edition에서는 Easy Connect String을 사용하는 게 더 안전해:
+bash# ❌ 작동 안 할 수 있으므로 
+sqlplus jbj_user/jbj_pass123@XEPDB1 을 사용하지 말고, 이렇게 해야 함
+sqlplus jbj_user/jbj_pass123@//localhost:1521/XEPDB1
+
+
 
 
 ### 7. oracle, elasticsearch 호스트 마운트 폴더 권한 맞추기

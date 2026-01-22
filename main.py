@@ -62,6 +62,7 @@ async def index_page():
 # Health Check
 @app.get("/health")
 async def health_check():
+    print("FastAPI works, anyway...")
     return {"status": "healthy"}
 
 

@@ -16,14 +16,8 @@ DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_PORT = os.getenv("DB_PORT", "1521")
 DB_SERVICE = os.getenv("DB_SERVICE", "XEPDB1")
 
-
-# Oracle 연결 URL (Easy Connect 방식)
-# cx_Oracle은 deprecated되었으므로 oracledb 사용 권장
-SQLALCHEMY_DATABASE_URL = f"oracle+oracledb://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/?service_name={DB_SERVICE}"
-
-# 또는 cx_Oracle 계속 사용 시
-# SQLALCHEMY_DATABASE_URL = f"oracle+cx_oracle://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/?service_name={DB_SERVICE}"
-
+# Oracle 연결 URL
+SQLALCHEMY_DATABASE_URL = f"oracle+cx_oracle://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/?service_name={DB_SERVICE}"
 
 # Engine 생성
 engine = create_engine(
