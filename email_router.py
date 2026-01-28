@@ -9,8 +9,10 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import os
 # docker-compose fastapi-backend environment에 정의되어 이미 OS에 등록된 환경 변수이므로 from dotenv import load_dotenv 필요없음
-# from dotenv import load_dotenv # 로컬 개발일때  + .env 사용
+from dotenv import load_dotenv # 로컬 개발일때  + .env 사용
 # load_dotenv()  # .env → OS 환경변수로 로드; 앱 시작 시 한 번만, 보통 config.py에서 처리
+# .env 파일 명시적 로드 (최우선)
+load_dotenv(override=True)
 
 from database import get_db
 from models import Auth
@@ -21,11 +23,14 @@ from auth import generate_auth_code
 router = APIRouter(prefix="/sendEmail", tags=["email"])
 
 # 이메일 설정 (환경변수로 관리)
-SMTP_SERVER = os.getenv("SMTP_SERVER", "smtp.gmail.com")
-SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
-SMTP_USER = os.getenv("SMTP_USER", "your_email@gmail.com")
-SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "your_app_password")
-
+#SMTP_SERVER = os.getenv("SMTP_SERVER", "smtp.gmail.com")
+#SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
+#SMTP_USER = os.getenv("SMTP_USER", "your_email@gmail.com")
+#SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "your_app_password")
+SMTP_SERVER = os.getenv("SMTP_SERVER")
+SMTP_PORT = int(os.getenv("SMTP_PORT"))
+SMTP_USER = os.getenv("SMTP_USER")
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
 
 def send_email(to_email: str, subject: str, html_content: str):
     """이메일 발송"""
@@ -77,11 +82,11 @@ async def send_signup_auth_email(
     db.commit()
     
     # 이메일 발송
-    subject = "[DevLog Project] 회원 가입 인증코드"
+    subject = "[JoBoJu Project] 회원 가입 인증코드"
     html_content = f"""
     <html>
         <body>
-            <p>DevLog Project 회원 가입 인증코드입니다.</p>
+            <p>JoBoJu Project 회원 가입 인증코드입니다.</p>
             <h3 style='color:blue'>{auth_code}</h3>
         </body>
     </html>
@@ -119,13 +124,3 @@ async def check_auth_key(
         return {"result": 0, "message": "인증번호가 일치하지 않습니다"}
 
 
-@router.post("/checkCode/adminCode")
-async def check_admin_code(admin_code: str):
-    """관리자 승인 코드 확인"""
-    # 실제로는 DB에서 관리하는 것이 좋음
-    ADMIN_CODE = "devlog1234"
-    
-    if admin_code == ADMIN_CODE:
-        return {"result": 1, "message": "승인된 코드입니다"}
-    else:
-        return {"result": 0, "message": "승인되지 않은 코드입니다"}

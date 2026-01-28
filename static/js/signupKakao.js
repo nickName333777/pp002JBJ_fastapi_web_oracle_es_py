@@ -1,9 +1,17 @@
-console.log('signup.js loaded ...');
+console.log('signupKakao.js loaded...');
 
 // API_BASE_URL은 common.js에서 이미 선언됨
-//const API_BASE_URL = "http://localhost:8000";
 
-// 유효성 검사 결과 객체
+// kakaoId 확인 for 카카오 소셜로그인
+const kakaoId = sessionStorage.getItem('kakaoId');
+if (!kakaoId) {
+    alert('카카오 로그인 정보가 없습니다. 다시 로그인해주세요.');
+    window.location.href = '/login.html';
+}
+
+console.log('KakaoID:', kakaoId);
+
+// 유효성 검사 객체 (signup.js와 동일하게 사용)
 const checkObj = {
     memberEmail: false,
     memberPw: false,
@@ -15,7 +23,7 @@ const checkObj = {
     authKey: false
 };
 
-// 이메일 유효성 검사
+// 이메일 유효성 검사 (signup.js와 동일)
 const memberEmail = document.getElementById("memberEmail");
 const emailMessage = document.getElementById("emailMessage");
 
@@ -56,7 +64,7 @@ memberEmail.addEventListener("input", async function() {
     }
 });
 
-// 인증번호 발송
+// 인증번호 발송 (signup.js와 동일)
 let authTimer;
 let authMin = 4;
 let authSec = 59;
@@ -107,7 +115,7 @@ document.getElementById("sendAuthKeyBtn").addEventListener("click", async functi
     }
 });
 
-// 인증 확인
+// 인증 확인 (signup.js와 동일)
 const authKey = document.getElementById("authKey");
 const authKeyMessage = document.getElementById("authKeyMessage");
 
@@ -136,6 +144,37 @@ document.getElementById("checkAuthKeyBtn").addEventListener("click", async funct
         console.error("인증 확인 오류:", error);
     }
 });
+
+// // 비밀번호 검증 (간단히 구현 - 필요시 signup.js 참조하여 확장)
+// const memberPw = document.getElementById("memberPw");
+// const memberPwConfirm = document.getElementById("memberPwConfirm");
+
+// memberPw.addEventListener("input", function() {
+//     const regExp = /^[\w!@#\-_]{6,20}$/;
+//     checkObj.memberPw = regExp.test(memberPw.value);
+// });
+
+// memberPwConfirm.addEventListener("input", function() {
+//     checkObj.memberPwConfirm = (memberPw.value === memberPwConfirm.value) && checkObj.memberPw;
+// });
+
+// // 나머지 필드들도 간단히 검증
+// document.getElementById("memberName").addEventListener("input", function(e) {
+//     checkObj.memberName = /^[가-힣]{2,15}$/.test(e.target.value);
+// });
+
+// document.getElementById("memberNickname").addEventListener("input", function(e) {
+//     checkObj.memberNickname = /^[가-힣a-zA-Z0-9]{2,10}$/.test(e.target.value);
+// });
+
+// document.getElementById("memberTel").addEventListener("input", function(e) {
+//     checkObj.memberTel = /^0(1[01]|2|[3-6][1-5]|70)\d{7,8}$/.test(e.target.value);
+// });
+
+// document.getElementById("memberCareer").addEventListener("input", function(e) {
+//     checkObj.memberCareer = /^(?=.*[가-힣])(?=.*[0-9])[가-힣0-9 ]{2,40}$/.test(e.target.value);
+// });
+
 
 // 비밀번호 유효성 검사
 const memberPw = document.getElementById("memberPw");
@@ -390,110 +429,15 @@ memberCareer.addEventListener("input", () =>{
 
 })
 
-///// 이거는 FastAPI에서는 turn-off하자..
-// 관리자 계정 신청시 관리자 승인코드 유효성 검사
-const memberAdmin = document.getElementById("memberAdmin");
-
-const adminCode = document.getElementById("adminCode");
-const adminCodeMessage = document.getElementById("adminCodeMessage");
-
-memberAdmin.addEventListener("change", () => {
-    if (memberAdmin.checked) {
-        console.log("관리자 계정 신청 체크됨");
-        // 체크됐을 때 실행할 코드: 입력 adminCode유효성 검사
-        checkObj.memberAdmin = false;
-
-        //adminCode.addEventListener("input", () => {
-        adminCode.addEventListener("input", async(e) => {
-            if (adminCode.value == ""){
-                adminCodeMessage.innerText = "발급된 관리자계정 승인코드 입력"
-                adminCodeMessage.classList.remove("confirm", "error");
-                checkObj.memberAdmin = false;
-                return;
-            }
-            // 요청주소 : /checkCode/adminCode
-            // // 관리자승인코드 비유효 : "승인되지 않은 코드입니다." 빨간 글씨
-            // // 관리자승인 코드 유효 : "승인된 코드입니다." 초록글씨
-            // fetch("/checkCode/adminCode?adminCode=" + adminCode.value) // 입력파라미터명은 "adminCode"이 된다   
-            // .then(resp => resp.text()) // 0 or 1이므로 text로: 응답객체 -> 파싱(parsing, 데이터 형태 변환)
-            // .then(result => {
-            //     // result : 유효한 관리자 승인코드1, 아니면 0
-            //     console.log("유효한 관리자승인코드 ? : " + result);
-    
-            //     //if (result == 1){
-            //     if (result != 0) {
-            //         adminCodeMessage.innerText = "승인된 코드입니다."
-            //         adminCodeMessage.classList.add("confirm");
-            //         adminCodeMessage.classList.remove("error");
-            //         checkObj.memberAdmin = true;
-
-            //         console.log(" 지금까지 유효성 검사 결과: ")
-            //         console.log(checkObj)
-
-            //     } else {
-            //         adminCodeMessage.innerText = "승인되지 않은 코드입니다."
-            //         adminCodeMessage.classList.add("error");
-            //         adminCodeMessage.classList.remove("confirm");
-            //         checkObj.memberAdmin = false; 
-            //     }
-            // })
-            // .catch(err => console.log(err)) // 예외처리
-
-            //const response = await fetch(`${API_BASE_URL}/member/checkCode/adminCode?adminCode=${adminCode.value}`);
-            const response = await fetch(`${API_BASE_URL}/member/checkCode/adminCode?admin_code=${adminCode.value}`);
-            const data = await response.json();
-            console.log("adminCode 체크 결과 = ", data)
-            try {
-                //if (data != 0) {
-                //if (data.exists) {
-                if (data.result != 0) {
-                    adminCodeMessage.innerText = "승인된 코드입니다."
-                    adminCodeMessage.classList.add("confirm");
-                    adminCodeMessage.classList.remove("error");
-                    checkObj.memberAdmin = true;
-
-                    console.log(" 지금까지 유효성 검사 결과: ")
-                    console.log(checkObj)
-
-                } else {
-                    adminCodeMessage.innerText = "승인되지 않은 코드입니다."
-                    adminCodeMessage.classList.add("error");
-                    adminCodeMessage.classList.remove("confirm");
-                    checkObj.memberAdmin = false; 
-                }            
-
-            } catch (error) {
-            console.error("admin-code 체크 오류:", error);
-            }
-            
-        })
-
-    } else {
-        console.log("관리자  계정 신청 체크 해제됨");
-        // 해제됐을 때 실행할 코드
-        adminCodeMessage.innerText = ""
-        adminCodeMessage.classList.remove("confirm", "error");        
-        checkObj.memberAdmin = true;
-    }
-});
-
-// 맨처음 로딩됬을때 상태 => 물론 아직 이벤트발생이 일어난적 없으니 모두 False 초기값임
-console.log(" 초기 유효성 검사 상태: ")
-console.log(checkObj)
 
 
 
-
-// 회원가입 폼 제출
-document.getElementById("signUpFrm").addEventListener("submit", async (e) => {
+// 폼 제출
+document.getElementById("signupKakaoFrm").addEventListener("submit", async (e) => {
     e.preventDefault();
     
-    // checkObj에 모든 value가 true인지 검사
     // 모든 필드 검증
     for (let key in checkObj) {
-        console.log(key);
-        console.log(checkObj[key]); 
-
         if (!checkObj[key]) {
             alert(`${key}가 유효하지 않습니다.`);
             document.getElementById(key)?.focus();
@@ -512,7 +456,7 @@ document.getElementById("signUpFrm").addEventListener("submit", async (e) => {
     };
     
     try {
-        const response = await fetch(`${API_BASE_URL}/member/signup`, {
+        const response = await fetch(`${API_BASE_URL}/app/login/kakao/signup?kakao_id=${kakaoId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -523,13 +467,23 @@ document.getElementById("signUpFrm").addEventListener("submit", async (e) => {
         const data = await response.json();
         
         if (response.ok) {
+            // 토큰 저장 for 카카오 소셜로그인
+            localStorage.setItem('access_token', data.access_token);
+            
+		    // loginMember info를 localStorage에 저장
+            console.log("member_dto :", data.member_dto)
+		    localStorage.setItem('loginMember', JSON.stringify(data.member_dto));     
+		           
+            // kakaoId 세션 삭제 for 카카오 소셜로그인
+            sessionStorage.removeItem('kakaoId');
+            
             alert(data.message);
-            window.location.href = '/login.html';
+            window.location.href = '/index.html';
         } else {
-            throw new Error(data.detail || '회원가입에 실패했습니다.');
+            throw new Error(data.detail || '필수 회원정보 입력에 실패했습니다. 잠시후 다시 시도해 주세요');
         }
     } catch (error) {
-        console.error("회원가입 오류:", error);
+        console.error("필수 회원정보 입력 오류:", error);
         alert(error.message);
     }
 });

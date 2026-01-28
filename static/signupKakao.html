@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>회원가입 - DevLog</title>
+    <title>필수 회원정보 입력 - DevLog</title>
     <link rel="stylesheet" href="/static/css/common.css">
     <link rel="stylesheet" href="/static/css/signup.css">
 </head>
@@ -13,11 +13,11 @@
     <main>
         <div class="container-wrapper">
             <div class="top-space-bw-header"></div>
-            <h2 class="title fw-800">회원가입</h2>
+            <h2 class="title fw-800">필수 회원정보 입력</h2>
             
             <div class="container">
                 <div class="signup-box">
-                    <form id="signUpFrm">
+                    <form id="signupKakaoFrm">
                         <!-- 이메일 -->
                         <label class="label" for="memberEmail">아이디(이메일) <span class="required">*</span></label>
                         <div class="row">
@@ -79,27 +79,12 @@
                             <input type="checkbox" name="memberSubscribe" id="memberSubscribe" value="Y">
                             이메일 수신동의 (회원 전용 정보 제공 메일 수신에 동의합니다)
                         </label>
-  
-                          <!-- 관리자 신청 -->
-                        <div class="row admin-code">
-                            <label class="check fw-600" for="memberAdmin">
-                            <!-- 체크되면 브라우저는 무조건 "on" 을 전송함 => value="Y" 로 enums와 맞춰야함 -->
-                                <input type="checkbox" name="memberAdmin" id="memberAdmin"  value="Y">
-                                관리자 계정 신청
-                            </label>
-                            <div class="input-admin-code-wrapper">
-                                <!-- <label for="adminCode"> </label> -->
-                                <input type="text" name="adminCode" id="adminCode" class="input admin-code" 
-                                    placeholder="관리자 계정 승인코드 입력">
-                                <p class="desc" id="adminCodeMessage"></p>
-                            </div>    
-                        </div>
                         
                         <div class="spaceholder"><p><br></p></div>
                         
                         <!-- 가입 버튼 -->
                         <div class="btn-join-wrapper">
-                            <button type="submit" id="signUpBtn" class="btn-join">가입 하기</button>
+                            <button type="submit" id="signUpBtn" class="btn-join">필수 회원정보 입력</button>
                         </div>
                     </form>
                 </div>
@@ -110,6 +95,6 @@
     <div id="footer"></div>
     
     <script src="/static/js/common.js"></script>
-    <script src="/static/js/signup.js"></script>
+    <script src="/static/js/signupKakao.js"></script>
 </body>
 </html>

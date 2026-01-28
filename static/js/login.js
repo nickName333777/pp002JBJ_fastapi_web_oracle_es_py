@@ -1,6 +1,7 @@
 console.log("login.js loaded...");
 
-const API_BASE_URL = "http://localhost:8000";
+// API_BASE_URL은 common.js에서 이미 선언됨
+//const API_BASE_URL = "http://localhost:8000";
 
 // 페이지 로드 시 저장된 이메일 불러오기
 document.addEventListener('DOMContentLoaded', () => {
@@ -46,12 +47,15 @@ document.getElementById('loginFrm').addEventListener('submit', async (e) => {
             })
         });
         
+        
         const data = await response.json();
+
         
         if (!response.ok) {
             throw new Error(data.detail || '로그인 실패');
         }
         
+        console.log('로그인 성공, raw:', response);        
         console.log('로그인 성공:', data);
         
         // 토큰을 localStorage에 저장
@@ -72,10 +76,18 @@ document.getElementById('loginFrm').addEventListener('submit', async (e) => {
 });
 
 // 카카오 로그인
-document.getElementById('kakaoLoginBtn').addEventListener('click', () => {
-    // 카카오 로그인 구현 예정
-    alert('카카오 로그인은 추후 구현 예정입니다');
+//document.getElementById('kakaoLoginBtn').addEventListener('click', () => {
+//    // 카카오 로그인 구현 예정
+//    alert('카카오 로그인은 추후 구현 예정입니다');
+//});
+// 카카오 소셜로그인
+const kakaoLoginBtn = document.getElementById("kakaoLoginBtn");
+
+kakaoLoginBtn.addEventListener("click", function () {
+            // JoBoJu 서비스 서버로 이동
+            window.location.href = "/app/login/kakao";
 });
+
 
 // 쿠키 가져오기 함수
 function getCookie(name) {

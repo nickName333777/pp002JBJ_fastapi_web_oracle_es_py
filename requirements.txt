@@ -10,7 +10,10 @@ oracledb==1.4.2
 
 # 인증/보안
 python-jose[cryptography]==3.3.0
+#passlib[bcrypt]==1.7.4 => 이것만있으면 bcrypt==5.0.0설치로 이 passlib/bcript 조합에서 오류발생(쓰면않되는 조합)
+# 2026년 기준 FastAPI에서 bcrypt 쓸 거면 passlib 1.7.4 + bcrypt 3.2.2 말고는 보지 마라
 passlib[bcrypt]==1.7.4
+bcrypt==3.2.2
 python-dotenv==1.0.0
 
 # Pydantic 및 검증
@@ -21,6 +24,9 @@ aiosmtplib==3.0.1
 
 # CORS
 starlette==0.27.0
+
+# HTTP 요청 (카카오 API)
+requests==2.31.0
 
 # 기타 유틸리티
 python-dateutil==2.8.2

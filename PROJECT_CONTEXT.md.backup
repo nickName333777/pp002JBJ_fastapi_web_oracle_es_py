@@ -1,0 +1,40 @@
+[PROJECT]
+- 이름:
+- 목적 / 해결하려는 문제:
+
+[TECH STACK]
+- Backend:
+- Frontend:
+- DB:
+- Infra / Deployment:
+- 기타 라이브러리 / 프레임워크:
+
+[ARCHITECTURE]
+- 전체 구조 요약:
+- 주요 흐름 (request → response):
+
+[DECISIONS (중요한 합의)]
+- (날짜) 결정 내용 + 이유
+- 예: HTML 렌더링 시 FastAPI + Jinja2, DTO json() 사용 안 함
+
+[CURRENT STATE]
+- 지금까지 구현된 것:
+- 아직 안 된 것:
+- 막히는 지점 / 고민 중인 점:
+
+[CODE NOTES]
+- 핵심 코드 위치 / 파일명:
+- 주의사항 / 규칙:
+- 스타일 가이드:
+
+[NEXT TODO]
+- 바로 다음에 할 일 1:
+- 바로 다음에 할 일 2:
+
+[OPEN QUESTIONS]
+- 아직 결론 안 난 것:
+- 나중에 결정할 것:
+
+[ASSUMPTIONS]
+- 전제 조건:
+- 환경 가정:

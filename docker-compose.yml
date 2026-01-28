@@ -31,17 +31,22 @@ services: # 이 아래에 여러 컨테이너(서비스)를 나열한다.
       dockerfile: Dockerfile
     container_name: jbj-fastapi
     environment:
-      - DB_USER=jbj_user #your_userId # 실제값은 모두 .env에서 읽어와 사용
-      - DB_PASSWORD=jbj_password1234 # your_userId_password 
+      - DB_USER=your_userId # for Oracle DB, 실제값은 모두 database.py에서  .env로부터 읽어와 사용
+      - DB_PASSWORD=your_userId_password 
       - DB_HOST=oracle21c  # 기존 컨테이너 이름 (not 'oracle-db')
       - DB_PORT=1521
       - DB_SERVICE=XEPDB1
-      - SMTP_SERVER=smtp.gmail.com
+      - SMTP_SERVER=smtp.gmail.com # for EmailAuth, 실제값은 모두 email-router.py에서 .env로부터 읽어와 사용
       - SMTP_PORT=587
       - SMTP_USER=your@gmail.com
       - SMTP_PASSWORD=your_app_password
+      - KAKAO_REST_API_KEY=your_key # for 카카오 소셜로그인, 실제값은 모두 kakao_service.py에서 .env로부터 읽어와 사용
+      - KAKAO_CLIENT_SECRET=your_client_secret
+      - KAKAO_REDIRECT_URI=your_callback_uri
+      
     ports:
-      - "8000:8000"
+      - "8880:8880"
+      #- "8000:8000"      
     volumes:
       - .:/app
       - ./static:/app/static

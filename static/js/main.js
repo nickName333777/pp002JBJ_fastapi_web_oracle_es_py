@@ -1,5 +1,8 @@
 console.log('main.js loaded...');
 
+// API_BASE_URL은 common.js에서 이미 선언됨
+
+
 // 페이지 로드 시 실행
 document.addEventListener('DOMContentLoaded', () => {
     loadRecentPosts();

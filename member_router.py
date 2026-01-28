@@ -222,3 +222,17 @@ async def check_nickname_duplicate(nickname: str, db: Session = Depends(get_db))
         exists=exists,
         message="이미 사용 중인 닉네임입니다" if exists else "사용 가능한 닉네임입니다"
     )
+    
+    
+
+#@router.post("/checkCode/adminCode") # DB로 관리시
+@router.get("/checkCode/adminCode") # hardcode 시
+async def check_admin_code(admin_code: str): #FastAPI는 파라미터 이름 엄격: admin_code ≠ adminCode
+    """관리자 승인 코드 확인"""
+    # 실제로는 DB에서 관리하는 것이 좋음
+    ADMIN_CODE = "JoBoJu1234"
+    
+    if admin_code == ADMIN_CODE:
+        return {"result": 1, "message": "승인된 코드입니다"}
+    else:
+        return {"result": 0, "message": "승인되지 않은 코드입니다"}

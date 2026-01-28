@@ -12,6 +12,9 @@ pp002JBJ_fastapi_web_oracle_es_py/
 ├── 📄 auth.py                      # JWT 인증 유틸리티
 ├── 📄 member_router.py             # 회원 라우터
 ├── 📄 email_router.py              # 이메일 라우터
+├── 📄 kakao_router.py              # 카카오 소셜 로그인 라우터
+├── 📄 kakao_schemas.py             # 카카오 소셜 로그인 Pydantic 스키마
+├── 📄 kakao_service.py             # 카카오 소셜 로그인 서비스
 │
 ├── 📄 requirements.txt             # Python 의존성
 ├── 📄 Dockerfile                   # FastAPI 컨테이너 설정
@@ -21,13 +24,21 @@ pp002JBJ_fastapi_web_oracle_es_py/
 ├── 📄 .gitignore                   # Git ignore 설정
 ├── 📄 README.md                    # 프로젝트 문서
 │
+├── 📁 docs/adr/                	  # SpringBoot->FastAPI 포팅 히스토리
+│   ├── 📄 s001_loginSignUp_Prompt.mdown # login/signup 포팅
+│   ├── 📄 s002_kakaoLogin_Prompt.mdown # 카카오 소셜 로그인 포팅
+│   ├── 📄 s003_Answer_loginSignUp_kakaoLogin.mdown # s001~s002 단계에서 진행된 porting의 결과들
+│   └── 📄 s007_freeboard_Prompt.mdown # 자유게시판/댓글 CRUD 포팅
+│
 ├── 📁 init_scripts/                # DB 초기화 스크립트
-│   └── 📄 init.sql
+│   ├── 📄 init_CDB_XE.sql          # Container DB(XE) 초기화 스크립트
+│   └── 📄 init_PDB_XEPDB1.sql      # PDB (XEPBD1) 초기화 스크립트
 │
 ├── 📁 static/                      # 프론트엔드 정적 파일
 │   ├── 📄 index.html
 │   ├── 📄 login.html
 │   ├── 📄 signup.html
+│   ├── 📄 signupKakao.html
 │   │
 │   ├── 📁 css/
 │   │   ├── 📄 common.css
@@ -39,9 +50,11 @@ pp002JBJ_fastapi_web_oracle_es_py/
 │   │   ├── 📄 common.js
 │   │   ├── 📄 main.js
 │   │   ├── 📄 login.js
-│   │   └── 📄 signup.js
+│   │   ├── 📄 signup.js
+│   │   └── 📄 signupKakao.js
 │   │
 │   └── 📁 images/
+│       ├── 🖼️ favicon.ico
 │       └── 🖼️ jbj_logo.png
 │
 └── 📁 logstash/                    # Logstash 설정 (선택)
@@ -64,6 +77,11 @@ pp002JBJ_fastapi_web_oracle_es_py/
 | `auth.py` | JWT 토큰 생성/검증, 비밀번호 해싱 |
 | `member_router.py` | 회원가입/로그인/중복체크 API |
 | `email_router.py` | 이메일 인증 API |
+| ` ` |  |
+| `kakao_router.py` | 카카오 소셜 로그인 라우터 |
+| `kakao_schemas.py` | 카카오 소셜 로그인 Pydantic 스키마 |
+| `kakao_service.py` | 카카오 소셜 로그인 서비스 |
+
 
 ### Frontend (HTML/CSS/JS)
 
@@ -72,6 +90,7 @@ pp002JBJ_fastapi_web_oracle_es_py/
 | `index.html` | 메인 페이지 |
 | `login.html` | 로그인 페이지 |
 | `signup.html` | 회원가입 페이지 |
+| `signupKakao.html` | 카카오 소셜로그인 필수회원 정보 입력 페이지 |
 | `common.css` | 공통 스타일 (헤더, 푸터, 네비게이션) |
 | `main.css` | 메인 페이지 전용 스타일 |
 | `login.css` | 로그인 페이지 전용 스타일 |
@@ -80,6 +99,7 @@ pp002JBJ_fastapi_web_oracle_es_py/
 | `main.js` | 메인 페이지 로직 |
 | `login.js` | 로그인 로직 |
 | `signup.js` | 회원가입 로직 |
+| `signupKakao.js` | 카카오 소셜 로그인 필수 회원정보 입력 로직 |
 
 ### Docker & Infrastructure
 
@@ -529,7 +549,81 @@ bash# ❌ 작동 안 할 수 있으므로
 sqlplus jbj_user/jbj_pass123@XEPDB1 을 사용하지 말고, 이렇게 해야 함
 sqlplus jbj_user/jbj_pass123@//localhost:1521/XEPDB1
 
+4. DB 초기화
+docker exec -i oracle21c sqlplus jbj_user/jbj_pass123@//localhost:1521/XEPDB1 < init_scripts/init_PDB_XEPDB1.sql
 
+
+
+#### 6-C-7. 사용하지 않는 untagged 이미지(특히 dangling 이미지)를 지우는 대표적인 명령어
+
+1. dangling(태그·레포 없음) 이미지 삭제: 가장 안전한 방법:
+
+<br>현재 어떤 컨테이너에서도 사용하지 않는 “dangling” 이미지를 삭제한다.​확인 질문이 나오면 y 입력.
+<br>$ docker image prune
+
+<br>강제로(확인 없이) 지우고 싶으면:
+<br>$ docker image prune -f
+
+2. 모든 untagged 이미지 삭제: (untagged) 이미지를 전부 지우고 싶다면:
+
+<br>먼저 목록 확인
+<br>$ docker images -f "dangling=true" 
+
+<br>-q 옵션은 이미지 ID만 출력해서, 그걸 docker rmi에 넘겨 한 번에 삭제하는 방식이다.
+<br>$ docker rmi $(docker images -f "dangling=true" -q) 
+​
+
+3. 완전 정리(안 쓰는 모든 이미지 삭제): 사용되지 않는 이미지들 다 정리
+<br>$ docker image prune -a 
+<br>현재 어떤 컨테이너에서도 사용하지 않는 모든 이미지를 삭제한다.
+(​실행 전에 꼭 docker ps -a로 필요한 컨테이너/이미지 있는지 확인하는 것이 좋다.)
+
+4. 특정 이미지만 지우려면 docker rmi(또는 docker image rm) 명령어에 이미지 이름:태그 또는 이미지 ID를 넣어서 삭제하면 된다.
+
+<br> 이미지 이름:태그로 삭제 =>  $docker rmi REPOSITORY:TAG
+
+<br> 예: python:3.10-slim 삭제 => $docker rmi python:3.10-slim
+
+<br> 이미지 ID로 삭제 => $ docker rmi IMAGE_ID
+
+<br> 예: ID가 0fb4f4cf454f 인 이미지 삭제=> $ docker rmi 0fb4f4cf454f
+<br> 사용 중일 때 에러 나는 경우: 해당 이미지를 사용하는 컨테이너가 있으면 삭제가 안 되고 에러가 난다. 이때는:
+
+<br>컨테이너 정지: docker stop 컨테이너ID
+<br>컨테이너 삭제: docker rm 컨테이너ID
+<br>그다음 다시 docker rmi 이미지ID 실행.
+​<br>
+<br>강제로 삭제 (주의) ==> $ docker rmi -f IMAGE_ID
+<br>강제 삭제 옵션이어서, 다른 데서 쓰고 있는 이미지를 억지로 지울 수 있어 실수하면 환경 깨질 수 있으니 주의해서 사용.
+​
+#### 6-C-8. FastAPI debugging 재시작 필요 여부 요약표
+
+| 변경 사항  | 재시작 필요?| 명령어|
+|---|---|---|
+|Python 코드 (.py)|❌ 불필요|자동 리로드|
+|Static 파일 (HTML/CSS/JS)|❌ 불필요|브라우저 새로고침|
+|.env 파일|⚠️ restart만|docker-compose restart fastapi-backend|requirements.txt|✅ 필요|docker-compose build fastapi-backend && docker-compose up -d
+|Dockerfile|✅ 필요|docker-compose down && docker-compose build --no-cache && docker-compose up -d
+|docker-compose.yml|✅ 필요|docker-compose down && docker-compose up -d|
+
+#### 개발워크플로우
+1. 도커 시작
+	<br>$docker compose up -d
+	
+2. 개발 시작	
+	<br>$docker logs -f jbj-fastapi  # 터미널 1
+
+3. 코드 수정 (VS Code 또는 gedit): → 저장 → 로그에서 "Reloading..." 확인
+
+4. API 테스트 (터미널 2)
+	<br>$curl http://localhost:8000/member/login ...
+
+5. 브라우저 테스트: → F12 → Network 탭 → 요청 확인
+
+6. 문제 발생 시: → 로그 확인 → DB 직접 확인 → Python shell에서 직접 테스트
+
+7. 하루 작업 종료
+	<br>$docker-compose down
 
 
 ### 7. oracle, elasticsearch 호스트 마운트 폴더 권한 맞추기

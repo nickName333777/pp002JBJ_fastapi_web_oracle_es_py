@@ -18,14 +18,25 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/member/login")
 
 
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """비밀번호 검증"""
-    return pwd_context.verify(plain_password, hashed_password)
+# def verify_password(plain_password: str, hashed_password: str) -> bool:
+#     """비밀번호 검증"""
+#     return pwd_context.verify(plain_password, hashed_password)
+#
+# def get_password_hash(password: str) -> str:
+#     """비밀번호 해싱"""
+#     return pwd_context.hash(password)
 
+##### bcrypt 3.2.2 의 72바이트 제한 방어 (bcrypt는 무조건 72 byte 제한필요 아니면 제한없는 argon2-cffi 해시알고리즘사용 )
+MAX_BCRYPT_LEN = 72
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    if not plain_password or not hashed_password:
+        return False
+    return pwd_context.verify(plain_password[:MAX_BCRYPT_LEN], hashed_password)
 
 def get_password_hash(password: str) -> str:
-    """비밀번호 해싱"""
-    return pwd_context.hash(password)
+    return pwd_context.hash(password[:MAX_BCRYPT_LEN])
+
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):

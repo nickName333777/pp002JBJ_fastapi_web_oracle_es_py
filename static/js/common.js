@@ -1,5 +1,16 @@
 // 공통 JavaScript 유틸리티
-const API_BASE_URL = "http://localhost:8000";
+// const API_BASE_URL = "http://localhost:8000"; // login.js, signup.js, main.js에서 중복설정 충돌 발생
+// const API_BASE_URL = "http://localhost:8880"; // login.js, signup.js, main.js에서 중복설정 충돌 발생
+// 전역 설정 객체
+window.APP_CONFIG = window.APP_CONFIG || {
+    API_BASE_URL: "http://localhost:8880",
+    DEBUG: true
+};
+// 편의를 위한 상수
+const API_BASE_URL = window.APP_CONFIG.API_BASE_URL;
+
+console.log("common.js loaded, API_BASE_URL:", API_BASE_URL);
+
 
 // 페이지 로드 시 실행
 document.addEventListener('DOMContentLoaded', () => {
