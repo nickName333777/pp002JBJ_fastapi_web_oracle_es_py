@@ -25,10 +25,10 @@ pp002JBJ_fastapi_web_oracle_es_py/
 ├── 📄 README.md                    # 프로젝트 문서
 │
 ├── 📁 docs/adr/                	  # SpringBoot->FastAPI 포팅 히스토리
-│   ├── 📄 s001_loginSignUp_Prompt.mdown # login/signup 포팅
-│   ├── 📄 s002_kakaoLogin_Prompt.mdown # 카카오 소셜 로그인 포팅
-│   ├── 📄 s003_Answer_loginSignUp_kakaoLogin.mdown # s001~s002 단계에서 진행된 porting의 결과들
-│   └── 📄 s007_freeboard_Prompt.mdown # 자유게시판/댓글 CRUD 포팅
+│   ├── 📄 s001_loginSignUp_Prompt.md # login/signup 포팅
+│   ├── 📄 s002_kakaoLogin_Prompt.md # 카카오 소셜 로그인 포팅
+│   ├── 📄 s003_Answer_loginSignUp_kakaoLogin.md # s001~s002 단계에서 진행된 porting의 결과들
+│   └── 📄 s007_freeboard_Prompt.md # 자유게시판/댓글 CRUD 포팅
 │
 ├── 📁 init_scripts/                # DB 초기화 스크립트
 │   ├── 📄 init_CDB_XE.sql          # Container DB(XE) 초기화 스크립트
