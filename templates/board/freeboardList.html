@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}자유게시판 - JBJ Community{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for(request, 'static', path='/css/freeboardList.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- 게시판 헤더 -->
+    <div class="board-header">
+        <h1>자유게시판</h1>
+        <p class="board-description">자유롭게 소통하는 커뮤니티 공간입니다</p>
+    </div>
+
+    <!-- 검색 및 정렬 -->
+    <div class="board-controls">
+        <form method="get" action="{{ url_for(request, 'board_list') }}" class="search-box">
+            <select name="search_type" class="search-type">
+                <option value="title" {% if search_type == 'title' %}selected{% endif %}>제목</option>
+                <option value="content" {% if search_type == 'content' %}selected{% endif %}>내용</option>
+                <option value="author" {% if search_type == 'author' %}selected{% endif %}>작성자</option>
+                <option value="all" {% if search_type == 'all' %}selected{% endif %}>전체</option>
+            </select>
+            <input type="text" name="keyword" class="search-input" placeholder="검색어를 입력하세요" value="{{ keyword }}">
+            <input type="hidden" name="sort_by" value="{{ sort_by }}">
+            <button type="submit" class="btn-search">검색</button>
+        </form>
+
+        <div class="sort-box">
+            <select id="sortSelect" class="sort-select" onchange="changeSort(this.value)">
+                <option value="recent" {% if sort_by == 'recent' %}selected{% endif %}>최신순</option>
+                <option value="views" {% if sort_by == 'views' %}selected{% endif %}>조회수순</option>
+                <option value="likes" {% if sort_by == 'likes' %}selected{% endif %}>좋아요순</option>
+            </select>
+        </div>
+
+        {% if current_user %}
+        <a href="{{ url_for(request, 'board_write_page') }}" class="btn-write">글쓰기</a>
+        {% endif %}
+    </div>
+
+    <!-- 게시글 목록 -->
+    <div class="board-list">
+        {% if board_list %}
+            {% for item in board_list %}
+            <div class="board-item" onclick="location.href='{{ url_for(request, 'board_detail', board_no=item.board.board_no) }}'">
+                {% if item.thumbnail %}
+                    <img src="{{ item.thumbnail }}" alt="썸네일" class="board-thumbnail">
+                {% else %}
+                    <div class="board-thumbnail no-image">📄</div>
+                {% endif %}
+                
+                <div class="board-content">
+                    <h3 class="board-title">{{ item.board.board_title }}</h3>
+                    
+                    <div class="board-meta">
+                        <div class="board-author">
+                            {% if item.board.author.profile_img %}
+                                <img src="/uploads{{ item.board.author.profile_img }}" alt="프로필" class="author-profile">
+                            {% else %}
+                                <span>👤</span>
+                            {% endif %}
+                            <span>{{ item.board.author.member_nickname }}</span>
+                        </div>
+                        <span>·</span>
+                        <span>{{ item.board.b_create_date.strftime('%Y.%m.%d') }}</span>
+                    </div>
+
+                    <div class="board-stats">
+                        <div class="stat-item">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                            </svg>
+                            <span>{{ item.board.board_count }}</span>
+                        </div>
+                        <div class="stat-item">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                            </svg>
+                            <span>{{ item.like_count }}</span>
+                        </div>
+                        <div class="stat-item">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                            </svg>
+                            <span>{{ item.comment_count }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-list">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <p>게시글이 없습니다.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- 페이징 -->
+    {% if total_pages > 1 %}
+    <div class="pagination">
+        <!-- 이전 버튼 -->
+        {% if page > 1 %}
+            <a href="{{ url_for(request, 'board_list') }}?page={{ page - 1 }}&limit={{ limit }}&keyword={{ keyword }}&search_type={{ search_type }}&sort_by={{ sort_by }}" class="page-btn">‹</a>
+        {% else %}
+            <button class="page-btn" disabled>‹</button>
+        {% endif %}
+
+        <!-- 페이지 번호 -->
+        {% for page_num in page_numbers %}
+            <a href="{{ url_for(request, 'board_list') }}?page={{ page_num }}&limit={{ limit }}&keyword={{ keyword }}&search_type={{ search_type }}&sort_by={{ sort_by }}" 
+               class="page-btn {% if page_num == page %}active{% endif %}">
+                {{ page_num }}
+            </a>
+        {% endfor %}
+
+        <!-- 다음 버튼 -->
+        {% if page < total_pages %}
+            <a href="{{ url_for(request, 'board_list') }}?page={{ page + 1 }}&limit={{ limit }}&keyword={{ keyword }}&search_type={{ search_type }}&sort_by={{ sort_by }}" class="page-btn">›</a>
+        {% else %}
+            <button class="page-btn" disabled>›</button>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 정렬 변경
+function changeSort(sortBy) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('sort_by', sortBy);
+    url.searchParams.set('page', '1'); // 정렬 변경 시 1페이지로
+    window.location.href = url.toString();
+}
+</script>
+{% endblock %}

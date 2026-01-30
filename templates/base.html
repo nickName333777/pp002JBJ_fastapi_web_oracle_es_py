@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}JBJ Community{% endblock %}</title>
+    
+    <!-- 공통 CSS -->
+    <link rel="stylesheet" href="{{ url_for(request, 'static', path='/css/common.css') }}">
+    
+    <!-- 페이지별 CSS -->
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- 헤더 -->
+    {% include 'components/header.html' %}
+
+    <!-- 메인 컨텐츠 -->
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- 푸터 -->
+    {% include 'components/footer.html' %}
+
+    <!-- 공통 JS -->
+    <script src="{{ url_for(request, 'static', path='/js/common.js') }}"></script>
+    
+    <!-- 페이지별 JS -->
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

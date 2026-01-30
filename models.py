@@ -3,14 +3,20 @@ SQLAlchemy Models for FastAPI Backend
 Oracle DB 테이블에 매핑되는 모델들
 """
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, CheckConstraint
-from sqlalchemy import UniqueConstraint
+from sqlalchemy import UniqueConstraint # kakao social login
+from sqlalchemy import Text, CLOB # freeboard
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
 from sqlalchemy import Sequence # 생성한 SEQ_TABLE__NO  자동삽입용
 
+from sqlalchemy import Text, CLOB
+
 Base = declarative_base()
 
+# ================================================================
+# 회원/인증
+# ================================================================
 
 class Level(Base):
     """레벨 테이블"""
@@ -28,30 +34,42 @@ class Member(Base):
     """회원 테이블"""
     __tablename__ = "MEMBER"
     
+    # PK
     #member_no = Column("MEMBER_NO", Integer, primary_key=True, autoincrement=True)
     member_no = Column("MEMBER_NO", Integer, Sequence("SEQ_MEMBER_NO"), primary_key=True, autoincrement=True)    
+    # 로그인 정보
     member_email = Column("MEMBER_EMAIL", String(30), nullable=False, unique=True)
     member_pw = Column("MEMBER_PW", String(200))
+    # 기본 정보
     member_name = Column("MEMBER_NAME", String(30), nullable=False)
     member_nickname = Column("MEMBER_NICKNAME", String(30), nullable=False)
     member_tel = Column("MEMBER_TEL", String(13), nullable=False)
     member_career = Column("MEMBER_CAREER", String(50), nullable=False)
+    # 상태값
     member_subscribe = Column("MEMBER_SUBSCRIBE", String(1), default='N', nullable=False)
     member_admin = Column("MEMBER_ADMIN", String(1), default='N', nullable=False)
-    profile_img = Column("PROFILE_IMG", String(300))
     member_del_fl = Column("MEMBER_DEL_FL", String(1), default='N', nullable=False)
-    m_create_date = Column("M_CREATE_DATE", DateTime, default=datetime.now)
-    subscription_price = Column("SUBSCRIPTION_PRICE", Integer, default=0, nullable=False)
+    profile_img = Column("PROFILE_IMG", String(300))
+    # 프로필
     my_info_intro = Column("MY_INFO_INTRO", String(2000))
     my_info_git = Column("MY_INFO_GIT", String(200))
     my_info_homepage = Column("MY_INFO_HOMEPAGE", String(200))
+    # 활동 정보
+    subscription_price = Column("SUBSCRIPTION_PRICE", Integer, default=0, nullable=False)
     beans_amount = Column("BEANS_AMOUNT", Integer, default=0, nullable=False)
     current_exp = Column("CURRENT_EXP", Integer, default=0, nullable=False)
+    # 날짜
+    m_create_date = Column("M_CREATE_DATE", DateTime, default=datetime.now)
+    # FK
     member_level_no = Column("MEMBER_LEVEL", Integer, ForeignKey("LEVELS.LEVEL_NO"), nullable=False)
     
     # 관계 설정
     member_level = relationship("Level", back_populates="members")
     social_logins = relationship("SocialLogin", back_populates="member")
+    boards = relationship("Board", back_populates="author")
+    comments = relationship("Comment", back_populates="author")
+    board_likes = relationship("BoardLike", back_populates="member")
+    
     
     # 제약조건
     __table_args__ = (
@@ -88,4 +106,129 @@ class SocialLogin(Base):
     # 제약조건: PROVIDER + PROVIDER_ID 복합 유니크
     __table_args__ = (
         UniqueConstraint('PROVIDER', 'PROVIDER_ID', name='UK_SOCIAL_LOGIN'),
+        CheckConstraint("PROVIDER IN ('kakao', 'google', 'naver')"),
     )    
+
+
+# ================================================================
+# 자유게시판 모델들
+# ================================================================
+
+class BoardType(Base):
+    """게시판 타입 테이블"""
+    __tablename__ = 'BOARDTYPE'
+    
+    board_code = Column('BOARD_CODE', Integer, primary_key=True)
+    board_name = Column('BOARD_NAME', String(20), nullable=False)
+    parents_board_code = Column('PARENTS_BOARD_CODE', Integer, ForeignKey('BOARDTYPE.BOARD_CODE'))
+    
+    # 관계
+    boards = relationship("Board", back_populates="board_type")
+
+
+class Board(Base):
+    """게시글 테이블"""
+    __tablename__ = 'BOARD'
+    
+    # PK
+    #board_no = Column('BOARD_NO', Integer, primary_key=True)
+    board_no = Column('BOARD_NO', Integer, Sequence("SEQ_BOARD_NO"), primary_key=True)
+        
+    # 게시글 정보
+    board_title = Column('BOARD_TITLE', String(300), nullable=False)
+    board_content = Column('BOARD_CONTENT', CLOB, nullable=False)
+    
+    # 날짜
+    b_create_date = Column('B_CREATE_DATE', DateTime, nullable=False, default=datetime.now)
+    b_update_date = Column('B_UPDATE_DATE', DateTime)
+    
+    # 통계
+    board_count = Column('BOARD_COUNT', Integer, nullable=False, default=0)
+    
+    # 상태
+    board_del_fl = Column('BOARD_DEL_FL', String(1), nullable=False, default='N')
+    
+    # FK
+    board_code = Column('BOARD_CODE', Integer, ForeignKey('BOARDTYPE.BOARD_CODE'), nullable=False)
+    member_no = Column('MEMBER_NO', Integer, ForeignKey('MEMBER.MEMBER_NO'), nullable=False)
+    
+    # 뉴스 게시판용 (선택)
+    news_reporter = Column('NEWS_REPORTER', String(100))
+    
+    # 관계
+    board_type = relationship("BoardType", back_populates="boards")
+    author = relationship("Member", back_populates="boards")
+    images = relationship("BoardImg", back_populates="board", cascade="all, delete-orphan")
+    comments = relationship("Comment", back_populates="board", cascade="all, delete-orphan")
+    likes = relationship("BoardLike", back_populates="board", cascade="all, delete-orphan")
+    
+    # 제약 조건
+    __table_args__ = (
+        CheckConstraint("BOARD_DEL_FL IN ('Y', 'N')"),
+    )
+
+
+class BoardImg(Base):
+    """게시글 이미지 테이블"""
+    __tablename__ = 'BOARD_IMG'
+    
+    #img_no = Column('IMG_NO', Integer, primary_key=True)
+    img_no = Column('IMG_NO', Integer, Sequence("SEQ_IMAGE_NO"), primary_key=True)    
+    img_path = Column('IMG_PATH', String(500), nullable=False)
+    img_orig = Column('IMG_ORIG', String(200))
+    img_rename = Column('IMG_RENAME', String(200))
+    img_order = Column('IMG_ORDER', Integer, nullable=False)
+    
+    # FK
+    board_no = Column('BOARD_NO', Integer, ForeignKey('BOARD.BOARD_NO'), nullable=False)
+    
+    # 관계
+    board = relationship("Board", back_populates="images")
+
+
+class BoardLike(Base):
+    """게시글 좋아요 테이블"""
+    __tablename__ = 'BOARD_LIKE'
+    
+    # 복합 PK
+    board_no = Column('BOARD_NO', Integer, ForeignKey('BOARD.BOARD_NO'), primary_key=True)
+    member_no = Column('MEMBER_NO', Integer, ForeignKey('MEMBER.MEMBER_NO'), primary_key=True)
+    
+    # 관계
+    board = relationship("Board", back_populates="likes")
+    member = relationship("Member", back_populates="board_likes")
+
+
+class Comment(Base):
+    """댓글 테이블"""
+    __tablename__ = 'COMMENTS'
+    
+    # PK
+    #comment_no = Column('COMMENT_NO', Integer, primary_key=True)
+    comment_no = Column('COMMENT_NO', Integer, Sequence("SEQ_COMMENT_NO"), primary_key=True)
+        
+    # FK
+    member_no = Column('MEMBER_NO', Integer, ForeignKey('MEMBER.MEMBER_NO'), nullable=False)
+    board_no = Column('BOARD_NO', Integer, ForeignKey('BOARD.BOARD_NO'), nullable=False)
+    parents_comment_no = Column('PARENTS_COMMENT_NO', Integer, ForeignKey('COMMENTS.COMMENT_NO'))
+    
+    # 댓글 정보
+    c_create_date = Column('C_CREATE_DATE', DateTime, nullable=False, default=datetime.now)
+    comment_content = Column('COMMENT_CONTENT', String(2000), nullable=False)
+    
+    # 상태
+    comment_del_fl = Column('COMMENT_DEL_FL', String(1), nullable=False, default='N')
+    secret_yn = Column('SECRET_YN', String(1), nullable=False, default='N')
+    modify_yn = Column('MODIFY_YN', String(1), nullable=False, default='N')
+    
+    # 관계
+    board = relationship("Board", back_populates="comments")
+    author = relationship("Member", back_populates="comments")
+    parent_comment = relationship("Comment", remote_side=[comment_no])
+    
+    # 제약 조건
+    __table_args__ = (
+        CheckConstraint("COMMENT_DEL_FL IN ('Y', 'N')"),
+        CheckConstraint("SECRET_YN IN ('Y', 'N')"),
+        CheckConstraint("MODIFY_YN IN ('Y', 'N')"),
+    )

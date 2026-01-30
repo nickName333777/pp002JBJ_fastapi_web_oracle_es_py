@@ -25,6 +25,7 @@ from auth import (
     ACCESS_TOKEN_EXPIRE_MINUTES
 )
 
+
 router = APIRouter(prefix="/member", tags=["member"])
 
 
@@ -79,6 +80,22 @@ async def signup(
         "message": f"{request.member_nickname}님의 가입을 환영합니다. 로그인 후 서비스를 이용해 주세요.",
         "member_no": new_member.member_no
     }
+
+# @router.get("/login")
+# def login_page(request: Request): # 응답은 되나, 아래처럼 login.html보이도록 jinja2 템플릿 렌더링 해야함 
+#    return {"msg": "login page"} 
+###################    
+# Jinja2 템플릿
+# from core.templates import templates
+# 템플릿 렌더링
+# @router.get("/login") # 요청경로: "http://localhost:8880/member/login"
+# def login_page(request: Request):   # 또는 login_page() of main.py에 FileResponse("templates/auth/login.html") 쓸수도있음
+#                                     # => 이때 요청경로는 "http://localhost:8880/login.html" 임
+#     return templates.TemplateResponse("auth/login.html", {
+#         "request": request,
+#         # "current_user": current_user # NameError: name 'current_user' is not defined
+#     })    
+
 
 
 @router.post("/login", response_model=MemberLoginResponse)
@@ -192,7 +209,7 @@ async def login(
         current_exp=member.current_exp,
         m_create_date=member.m_create_date,
         level=level_dto,
-        access_token=access_token
+        access_token=access_token # 유효 access_token 추가
     )
 
 
@@ -200,7 +217,7 @@ async def login(
 async def logout(response: Response):
     """로그아웃"""
     # 쿠키 삭제
-    response.delete_cookie(key="saveId", path="/")
+    #response.delete_cookie(key="saveId", path="/") # 계속 saveId 남기려면 comment-out?
     return {"message": "로그아웃 성공"}
 
 

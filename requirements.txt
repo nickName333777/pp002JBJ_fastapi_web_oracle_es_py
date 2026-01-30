@@ -28,5 +28,8 @@ starlette==0.27.0
 # HTTP 요청 (카카오 API)
 requests==2.31.0
 
+# Jinja2 for 동적렌더링(SSR)
+jinja2==3.1.2
+
 # 기타 유틸리티
 python-dateutil==2.8.2

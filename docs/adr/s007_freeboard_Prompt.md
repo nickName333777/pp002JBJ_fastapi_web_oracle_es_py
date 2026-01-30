@@ -5379,5 +5379,174 @@ public class PaginationFB { //
 	}
 }
 
+[ 참고할 Utility 와 Exceptions 클래스들]
+
+package com.devlog.project.common.utility;
+
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
+public class Util {
+	// Cross Site Scripting(XSS) 방지 처리
+	//- 권한이 없는 사용자가 사이트에 스크립트를 작성하는 것
+	// - 웹 애플리케이션에서 발생하는 취약성
+	
+	public static String XSSHandling(String content) {
+		// 스크립트나 마크업 언어에서 기호나 기능을 나타내는 문자를 변경 처리 
+		// < - &lt; 
+		// > - &gt; 
+		// & - &amp;
+		// " - &quot;
+		
+		content = content.replaceAll("&", "&amp;"); 
+		content = content.replaceAll("<", "&lt;");  
+		content = content.replaceAll(">", "&gt;");  
+		content = content.replaceAll("\"", "&quot;");  
+		
+		return content;
+	}
+	
+	// 파일명 변경 메소드
+	   public static String fileRename(String originFileName) {
+	      SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+	      String date = sdf.format(new java.util.Date(System.currentTimeMillis()));
+
+	      int ranNum = (int) (Math.random() * 100000); // 5자리 랜덤 숫자 생성
+
+	      String str = "_" + String.format("%05d", ranNum);
+
+	      String ext = originFileName.substring(originFileName.lastIndexOf("."));
+
+	      return date + str + ext;
+	   }
+	   
+	   
+	   // 시간 변경 메소드
+	   public static String formatChatTime(LocalDateTime time) {
+		    if (time == null) return "";
+
+		    LocalDate today = LocalDate.now();
+		    LocalDate date = time.toLocalDate();
+
+		    if (date.equals(today)) {
+		        return time.format(DateTimeFormatter.ofPattern("HH:mm"));
+		    }
+
+		    return time.format(DateTimeFormatter.ofPattern("yyyy.MM.dd"));
+		}
+	   
+	   // 시rks 변경 메소드
+	   public static String formatNotiTime(LocalDateTime time) {
+		    if (time == null) return "";
+
+		    LocalDate today = LocalDate.now();
+		    LocalDate date = time.toLocalDate();
+
+		    if (date.equals(today)) {
+		        return time.format(DateTimeFormatter.ofPattern("HH:mm"));
+		    }
+
+		    return time.format(DateTimeFormatter.ofPattern("MM.dd"));
+		}
+}
+
+
+
+package com.devlog.project.common.exception;
+
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import com.devlog.project.common.error.dto.ErrorResponseDTO;
+
+import java.time.LocalDateTime;
+
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+
+	// 회원가입 중복 이메일
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ErrorResponseDTO> handleIllegalState(
+            IllegalStateException ex
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponseDTO(
+                        "JOIN_001",     	// code
+                        ex.getMessage(),	// message
+                        LocalDateTime.now().toString()	// time
+                ));
+    }
+
+
+    // 그 외 모든 예외
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponseDTO> handleException(
+            Exception ex
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorResponseDTO(
+                        "COMMON_001",
+                        "서버 오류가 발생했습니다.",
+                        LocalDateTime.now().toString()
+                ));
+    }
+}
+
+
+
+
+package com.devlog.project.common.exception;
+
+//사용자 정의 예외 만들기
+//-> Exception관련 클래스를 상속 받으면 된다.
+
+//checked exception   : 예외 처리 필수
+//unchecked exception : 예외 처리 선택 (개발자/사용자 실수)
+
+//tip. unchecked exception을 만들고 싶은 경우 : RuntimeException 상속 받아서 구현
+public class FileUploadException extends RuntimeException{
+	
+	public FileUploadException() { // ctrl + space-bar + enter: 기본 생성자
+		//
+		super("파일 업로드 중 예외 발생");
+	}
+	
+	// 매개변수 생성자
+	public FileUploadException(String message) { // new FileUploadException("merong~")
+		super(message);
+	}
+
+}
+
+
+package com.devlog.project.common.exception;
+
+//사용자 정의 예외 만들기
+//-> Exception관련 클래스를 상속 받으면 된다.
+
+//checked exception   : 예외 처리 필수
+//unchecked exception : 예외 처리 선택 (개발자/사용자 실수)
+
+//tip. unchecked exception을 만들고 싶은 경우 : RuntimeException 상속 받아서 구현
+public class ImageDeleteException extends RuntimeException{
+	
+	public ImageDeleteException() { // ctrl + space-bar + enter: 기본 생성자
+		//
+		super("이미지 삭제 중 예외 발생");
+	}
+	
+	// 매개변수 생성자
+	public ImageDeleteException(String message) { // new ImageDeleteException("merong2~")
+		super(message);
+	}
+
+}
 
 

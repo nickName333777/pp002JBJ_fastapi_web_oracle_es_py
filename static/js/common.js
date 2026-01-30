@@ -69,14 +69,16 @@ function setupLogoutHandler() {
                     localStorage.removeItem('loginMember');
                     
                     alert('로그아웃 되었습니다.');
-                    window.location.href = '/index.html';
+                    // window.location.href = '/index.html';
+                    window.location.href = '/static/index.html';
                 }
             } catch (error) {
                 console.error('로그아웃 오류:', error);
                 // 에러가 발생해도 로컬 데이터는 정리
                 localStorage.removeItem('access_token');
                 localStorage.removeItem('loginMember');
-                window.location.href = '/index.html';
+                // window.location.href = '/index.html';
+                window.location.href = '/static/index.html';
             }
         });
     }
@@ -102,7 +104,8 @@ async function fetchWithAuth(url, options = {}) {
         localStorage.removeItem('access_token');
         localStorage.removeItem('loginMember');
         alert('로그인이 필요합니다.');
-        window.location.href = '/login.html';
+        // window.location.href = '/login.html';
+        window.location.href = '/static/login.html';
         return null;
     }
     
@@ -166,7 +169,8 @@ function isLoggedIn() {
 function requireLogin() {
     if (!isLoggedIn()) {
         alert('로그인이 필요한 페이지입니다.');
-        window.location.href = '/login.html';
+        // window.location.href = '/login.html';
+        window.location.href = '/static/login.html';
         return false;
     }
     return true;

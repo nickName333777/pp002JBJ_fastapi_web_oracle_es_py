@@ -1,5 +1,5 @@
 """
-Pydantic Schemas for Request/Response validation (Member, EmailAuth, Dupcheck)
+Pydantic Schemas (DTO) for Request/Response validation (Member, EmailAuth, Dupcheck)
 """
 from pydantic import BaseModel, EmailStr, Field, validator
 from typing import Optional

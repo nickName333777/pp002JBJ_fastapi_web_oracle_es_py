@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}게시글 수정 - 자유게시판{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for(request, 'static', path='/css/freeboardWrite.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="write-header">
+        <h1>게시글 수정</h1>
+        <p class="write-description">게시글을 수정합니다</p>
+    </div>
+
+    <!-- 수정 폼 -->
+    <form action="{{ url_for(request, 'board_update_submit', board_no=board.board_no) }}" method="post" enctype="multipart/form-data" class="write-form">
+        <!-- 제목 -->
+        <div class="form-group">
+            <label for="boardTitle" class="form-label">제목 <span class="required">*</span></label>
+            <input 
+                type="text" 
+                id="boardTitle" 
+                name="board_title" 
+                class="form-input" 
+                value="{{ board.board_title }}"
+                required
+                maxlength="300"
+            >
+        </div>
+
+        <!-- 내용 -->
+        <div class="form-group">
+            <label for="boardContent" class="form-label">내용 <span class="required">*</span></label>
+            <textarea 
+                id="boardContent" 
+                name="board_content" 
+                class="form-textarea" 
+                required
+                rows="15"
+            >{{ board.board_content }}</textarea>
+        </div>
+
+        <!-- 기존 이미지 -->
+        {% if images %}
+        <div class="form-group">
+            <label class="form-label">기존 이미지</label>
+            <div class="existing-images">
+                {% for image in images %}
+                <div class="existing-image-item" id="existingImage{{ image.img_order }}">
+                    <img src="{{ image.img_path }}" alt="{{ image.img_orig }}">
+                    <div class="image-info">
+                        <span class="image-name">{{ image.img_orig }}</span>
+                        <span class="image-order">{{ '썸네일' if image.img_order == 0 else '이미지 ' + (image.img_order + 1)|string }}</span>
+                    </div>
+                    <button type="button" class="btn-remove-existing" onclick="markImageForDeletion({{ image.img_order }})">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                        삭제
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+            <input type="hidden" name="delete_images" id="deleteImages" value="">
+        </div>
+        {% endif %}
+
+        <!-- 새 이미지 추가 -->
+        <div class="form-group">
+            <label for="images" class="form-label">이미지 추가 (최대 5개)</label>
+            <div class="image-upload-area">
+                <input 
+                    type="file" 
+                    id="images" 
+                    name="images" 
+                    accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                    multiple
+                    class="file-input"
+                    onchange="previewNewImages(event)"
+                >
+                <label for="images" class="file-label">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 4v16m8-8H4"/>
+                    </svg>
+                    <span>새 이미지 추가</span>
+                </label>
+            </div>
+
+            <!-- 새 이미지 미리보기 -->
+            <div id="newImagePreview" class="image-preview-container"></div>
+        </div>
+
+        <!-- 버튼 -->
+        <div class="form-actions">
+            <button type="button" class="btn-cancel" onclick="location.href='{{ url_for(request, 'board_detail', board_no=board.board_no) }}'">취소</button>
+            <button type="submit" class="btn-submit">수정 완료</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 삭제할 이미지 목록
+let imagesToDelete = [];
+
+// 기존 이미지 삭제 표시
+function markImageForDeletion(imgOrder) {
+    const imageItem = document.getElementById(`existingImage${imgOrder}`);
+    
+    if (imagesToDelete.includes(imgOrder)) {
+        // 삭제 취소
+        imagesToDelete = imagesToDelete.filter(order => order !== imgOrder);
+        imageItem.classList.remove('marked-for-deletion');
+        imageItem.querySelector('.btn-remove-existing').innerHTML = `
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+            </svg>
+            삭제
+        `;
+    } else {
+        // 삭제 표시
+        imagesToDelete.push(imgOrder);
+        imageItem.classList.add('marked-for-deletion');
+        imageItem.querySelector('.btn-remove-existing').innerHTML = `
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+            취소
+        `;
+    }
+    
+    // hidden input 업데이트
+    document.getElementById('deleteImages').value = imagesToDelete.join(',');
+}
+
+// 새 이미지 미리보기
+function previewNewImages(event) {
+    const files = Array.from(event.target.files);
+    const previewContainer = document.getElementById('newImagePreview');
+    
+    // 기존 이미지 개수 확인
+    const existingCount = {{ images|length if images else 0 }};
+    const deletingCount = imagesToDelete.length;
+    const remainingCount = existingCount - deletingCount;
+    
+    if (remainingCount + files.length > 5) {
+        alert(`이미지는 최대 5개까지 가능합니다. (현재: ${remainingCount}개, 추가: ${files.length}개)`);
+        event.target.value = '';
+        return;
+    }
+    
+    // 파일 크기 검증
+    const maxSize = 10 * 1024 * 1024;
+    for (let file of files) {
+        if (file.size > maxSize) {
+            alert(`파일 크기는 10MB를 초과할 수 없습니다. (${file.name})`);
+            event.target.value = '';
+            return;
+        }
+    }
+    
+    previewContainer.innerHTML = '';
+    
+    files.forEach((file, index) => {
+        const reader = new FileReader();
+        
+        reader.onload = (e) => {
+            const previewItem = document.createElement('div');
+            previewItem.className = 'preview-item';
+            previewItem.innerHTML = `
+                <img src="${e.target.result}" alt="미리보기 ${index + 1}">
+                <div class="preview-info">
+                    <span class="preview-name">${file.name}</span>
+                    <span class="preview-order">새 이미지 ${index + 1}</span>
+                </div>
+            `;
+            previewContainer.appendChild(previewItem);
+        };
+        
+        reader.readAsDataURL(file);
+    });
+}
+
+// 폼 제출 전 검증
+document.querySelector('.write-form').addEventListener('submit', (e) => {
+    const title = document.getElementById('boardTitle').value.trim();
+    const content = document.getElementById('boardContent').value.trim();
+    
+    if (!title) {
+        alert('제목을 입력해주세요.');
+        e.preventDefault();
+        return;
+    }
+    
+    if (!content) {
+        alert('내용을 입력해주세요.');
+        e.preventDefault();
+        return;
+    }
+    
+    // 제출 중 표시
+    const submitBtn = document.querySelector('.btn-submit');
+    submitBtn.disabled = true;
+    submitBtn.textContent = '수정 중...';
+});
+</script>
+{% endblock %}

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>자유게시판 - JBJ Community</title>
+    <link rel="stylesheet" href="/static/css/common.css">
+    <link rel="stylesheet" href="/static/css/freeboardList.css">
+</head>
+<body>
+    <!-- 헤더 -->
+    <header id="header"></header>
+
+    <!-- 메인 컨텐츠 -->
+    <main class="container">
+        <div class="board-header">
+            <h1>자유게시판</h1>
+            <p class="board-description">자유롭게 소통하는 커뮤니티 공간입니다</p>
+        </div>
+
+        <!-- 검색 및 정렬 -->
+        <div class="board-controls">
+            <div class="search-box">
+                <select id="searchType" class="search-type">
+                    <option value="title">제목</option>
+                    <option value="content">내용</option>
+                    <option value="author">작성자</option>
+                    <option value="all">전체</option>
+                </select>
+                <input type="text" id="searchKeyword" class="search-input" placeholder="검색어를 입력하세요">
+                <button id="searchBtn" class="btn-search">검색</button>
+            </div>
+
+            <div class="sort-box">
+                <select id="sortBy" class="sort-select">
+                    <option value="recent">최신순</option>
+                    <option value="views">조회수순</option>
+                    <option value="likes">좋아요순</option>
+                </select>
+            </div>
+
+            <button id="writeBtn" class="btn-write">글쓰기</button>
+        </div>
+
+        <!-- 게시글 목록 -->
+        <div id="boardList" class="board-list">
+            <!-- JavaScript로 동적 생성 -->
+        </div>
+
+        <!-- 페이징 -->
+        <div id="pagination" class="pagination">
+            <!-- JavaScript로 동적 생성 -->
+        </div>
+    </main>
+
+    <!-- 푸터 -->
+    <footer id="footer"></footer>
+
+    <script src="/static/js/common.js"></script>
+    <script src="/static/js/freeboardList.js"></script>
+</body>
+</html>

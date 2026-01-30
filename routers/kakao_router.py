@@ -40,7 +40,7 @@ async def kakao_callback(
         
         if result.member_dto:
             # 기존 회원 - JWT 토큰 생성 후 메인 페이지로
-            access_token_expires = timedelta(minutes=60 * 24)  # 24시간
+            access_token_expires = timedelta(minutes=60 * 24)  # 24시간 in minutes
             jwt_token = create_access_token(
                 data={
                     "sub": result.member_dto.member_email,
@@ -50,7 +50,7 @@ async def kakao_callback(
                 expires_delta=access_token_expires
             )
             
-            # JWT 토큰 추가
+            # loginMember의 access_token 필드에 유효 JWT 토큰 추가
             result.member_dto.access_token = jwt_token
             
             # HTML 응답으로 토큰을 localStorage에 저장하고 메인페이지로 리다이렉트
@@ -164,7 +164,7 @@ async def kakao_signup(
     db.refresh(new_member)
     
     # JWT 토큰 생성
-    access_token_expires = timedelta(minutes=60 * 24)
+    access_token_expires = timedelta(minutes=60 * 24) # in minutes: 
     access_token = create_access_token(
         data={
             "sub": new_member.member_email,

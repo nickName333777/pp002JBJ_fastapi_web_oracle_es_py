@@ -50,6 +50,8 @@ services: # 이 아래에 여러 컨테이너(서비스)를 나열한다.
     volumes:
       - .:/app
       - ./static:/app/static
+      - ./templates:/app/templates
+      - ./uploads:/mnt/user-data/uploads  # 업로드 파일 저장      
     #depends_on:
     #  oracle-db:
     #    condition: service_healthy

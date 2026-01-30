@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}{{ board.board_title }} - 자유게시판{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for(request, 'static', path='/css/freeboardDetail.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- 게시글 내용 -->
+    <article class="board-article">
+        <div class="article-header">
+            <h1 class="article-title">{{ board.board_title }}</h1>
+            
+            <div class="article-meta">
+                <div class="author-info">
+                    {% if board.author.profile_img %}
+                        <img src="/uploads{{ board.author.profile_img }}" alt="프로필" class="author-profile">
+                    {% else %}
+                        <div class="author-profile" style="background:#ddd;display:flex;align-items:center;justify-content:center;">👤</div>
+                    {% endif %}
+                    <div class="author-details">
+                        <span class="author-name">{{ board.author.member_nickname }}</span>
+                        <span class="author-level">Level {{ board.author.member_level_no }}</span>
+                    </div>
+                </div>
+
+                <div class="article-stats">
+                    <div class="stat-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span>{{ board.b_create_date.strftime('%Y.%m.%d %H:%M') }}</span>
+                    </div>
+                    {% if board.b_update_date %}
+                    <div class="stat-item">
+                        <span>(수정됨)</span>
+                    </div>
+                    {% endif %}
+                    <div class="stat-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                        </svg>
+                        <span>{{ board.board_count }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 본문 -->
+        <div class="article-content">
+            {{ board.board_content | safe }}
+        </div>
+
+        <!-- 이미지 갤러리 -->
+        {% if images %}
+        <div class="article-images">
+            {% for image_url in images %}
+            <div class="image-item">
+                <img src="{{ image_url }}" alt="게시글 이미지">
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- 게시글 액션 -->
+        <div class="article-actions">
+            <!-- 좋아요 버튼 -->
+            <button class="btn-like {% if is_liked %}liked{% endif %}" 
+                    onclick="toggleLike({{ board.board_no }})" 
+                    id="likeBtn">
+                <svg viewBox="0 0 24 24" fill="{% if is_liked %}currentColor{% else %}none{% endif %}" stroke="currentColor" stroke-width="2">
+                    <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                </svg>
+                <span class="like-count" id="likeCount">{{ like_count }}</span>
+            </button>
+
+            <!-- 목록 버튼 -->
+            <button class="btn-list" onclick="location.href='{{ url_for(request, 'board_list') }}'">목록</button>
+
+            <!-- 작성자 전용 버튼 -->
+            {% if is_author %}
+            <button class="btn-edit" onclick="location.href='/board/update/{{ board.board_no }}'">수정</button>
+            <button class="btn-delete" onclick="deleteBoard({{ board.board_no }})">삭제</button>
+            {% endif %}
+        </div>
+    </article>
+
+    <!-- 댓글 섹션 -->
+    <section class="comment-section">
+        <h3 class="comment-title">
+            댓글 <span class="comment-count">{{ comment_count }}</span>
+        </h3>
+
+        <!-- 댓글 작성 (로그인 사용자만) -->
+        {% if current_user %}
+        <div class="comment-write">
+            <form onsubmit="submitComment(event, {{ board.board_no }})">
+                <textarea id="commentInput" placeholder="댓글을 입력하세요..." rows="3" required></textarea>
+                <div class="comment-write-actions">
+                    <label>
+                        <input type="checkbox" id="secretCheck">
+                        비밀댓글
+                    </label>
+                    <button type="submit" class="btn-submit">댓글 작성</button>
+                </div>
+            </form>
+        </div>
+        {% else %}
+        <div class="comment-write">
+            <p class="login-required">댓글을 작성하려면 <a href="/auth/login">로그인</a>이 필요합니다.</p>
+        </div>
+        {% endif %}
+
+        <!-- 댓글 목록 (다음 단계에서 구현) -->
+        <div class="comment-list">
+            <p class="comment-placeholder">댓글 기능은 다음 단계에서 구현됩니다.</p>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 좋아요 토글 (다음 단계에서 API 연동)
+function toggleLike(boardNo) {
+    alert('좋아요 기능은 다음 단계에서 구현됩니다.');
+}
+
+// 게시글 삭제 (다음 단계에서 API 연동)
+function deleteBoard(boardNo) {
+    if (confirm('정말 삭제하시겠습니까?')) {
+        alert('삭제 기능은 다음 단계에서 구현됩니다.');
+    }
+}
+
+// 댓글 작성 (다음 단계에서 API 연동)
+function submitComment(event, boardNo) {
+    event.preventDefault();
+    alert('댓글 작성 기능은 다음 단계에서 구현됩니다.');
+}
+</script>
+{% endblock %}

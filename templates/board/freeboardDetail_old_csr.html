@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>게시글 상세 - JBJ Community</title>
+    <link rel="stylesheet" href="/static/css/common.css">
+    <link rel="stylesheet" href="/static/css/freeboardDetail.css">
+</head>
+<body>
+    <!-- 헤더 -->
+    <header id="header"></header>
+
+    <!-- 메인 컨텐츠 -->
+    <main class="container">
+        <!-- 게시글 내용 -->
+        <article id="boardArticle" class="board-article">
+            <!-- JavaScript로 동적 생성 -->
+        </article>
+
+        <!-- 댓글 섹션 -->
+        <section class="comment-section">
+            <h3 class="comment-title">
+                댓글 <span id="commentCount" class="comment-count">0</span>
+            </h3>
+
+            <!-- 댓글 작성 -->
+            <div class="comment-write">
+                <textarea id="commentInput" placeholder="댓글을 입력하세요..." rows="3"></textarea>
+                <div class="comment-write-actions">
+                    <label>
+                        <input type="checkbox" id="secretCheck">
+                        비밀댓글
+                    </label>
+                    <button id="commentSubmitBtn" class="btn-submit">댓글 작성</button>
+                </div>
+            </div>
+
+            <!-- 댓글 목록 -->
+            <div id="commentList" class="comment-list">
+                <!-- JavaScript로 동적 생성 -->
+            </div>
+        </section>
+    </main>
+
+    <!-- 푸터 -->
+    <footer id="footer"></footer>
+
+    <script src="/static/js/common.js"></script>
+    <script src="/static/js/freeboardDetail.js"></script>
+</body>
+</html>
