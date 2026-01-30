@@ -26,19 +26,19 @@ bcu_router = APIRouter(prefix="/board2", tags=["게시판-작성/수정"])
 @bcu_router.get("/write", response_class=HTMLResponse, name="board_write_page")
 async def board_write_page(
     request: Request,
-    #current_user = Depends(get_current_user_optional)
+    current_user = Depends(get_current_user_optional)
 ):
     """게시글 작성 페이지"""
     
     # 로그인 체크
-    # if not current_user:
-    # 	#print("############ 로그인해주세요.....#########")
-    #     return RedirectResponse(url="/auth/login", status_code=303)
-    #     #return RedirectResponse(url="/board/list", status_code=303)
+    if not current_user:
+    	#print("############ 로그인해주세요.....#########")
+        return RedirectResponse(url="/auth/login", status_code=303)
+        #return RedirectResponse(url="/board/list", status_code=303)
     
     return templates.TemplateResponse("board/freeboardWrite.html", {
         "request": request,
-        #"current_user": current_user
+        "current_user": current_user
     })
 
 
@@ -122,7 +122,7 @@ async def board_write_submit(
 async def board_update_page(
     request: Request,
     board_no: int,
-    #current_user = Depends(get_current_user_optional),
+    current_user = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
     """게시글 수정 페이지"""
@@ -148,10 +148,10 @@ async def board_update_page(
         # 게시글 없음 → 목록으로
         return RedirectResponse(url="/board/list", status_code=303)
     
-    # # 작성자 확인
-    # if board.member_no != current_user['memberNo']:
-    #     # 권한 없음 → 상세 페이지로
-    #     return RedirectResponse(url=f"/board/{board_no}", status_code=303)
+    # 작성자 확인
+    if board.member_no != current_user['memberNo']:
+        # 권한 없음 → 상세 페이지로
+        return RedirectResponse(url=f"/board/{board_no}", status_code=303)
     
     # 이미지 목록
     images = sorted(board.images, key=lambda x: x.img_order)
@@ -167,7 +167,7 @@ async def board_update_page(
     
     return templates.TemplateResponse("board/freeboardUpdate.html", {
         "request": request,
-        #"current_user": current_user,
+        "current_user": current_user,
         "board": board,
         "images": image_list
     })
